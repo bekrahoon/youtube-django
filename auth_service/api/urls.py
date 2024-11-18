@@ -1,7 +1,11 @@
-from django.urls import path
+from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
+from views.profile_api import UserProfileViewSet
 from views.views_api import LoginView, RegisterView, UserDetailView
+from rest_framework.routers import DefaultRouter
 
+router = DefaultRouter()
+router.register(r"profiles", UserProfileViewSet, basename="profile")
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -11,6 +15,7 @@ from rest_framework_simplejwt.views import (
 
 
 urlpatterns = [
+    # Регистрация и вход пользователя
     path("auth/", obtain_auth_token),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
@@ -18,4 +23,6 @@ urlpatterns = [
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/login/", LoginView.as_view(), name="login"),
     path("user-detail/", UserDetailView.as_view(), name="user-detail"),
+    # Включаем маршруты из DefaultRouter для профилей пользователей
+    path("", include(router.urls)),
 ]

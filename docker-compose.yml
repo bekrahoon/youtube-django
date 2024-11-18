@@ -12,26 +12,12 @@ services:
     depends_on:
       - postgres_auth_service
 
-  user_profile_service:
-    build:
-      context: ./user_profile_service
-    container_name: user_profile_service
-    ports:
-      - "8001:8001"
-    networks:
-      - backend
-    env_file:
-      - ./user_profile_service/.env
-    depends_on:
-      - postgres_user_profile_service
-      - kafka
-
   video_service:
     build:
       context: ./video_service
     container_name: video_service
     ports:
-      - "8002:8002"
+      - "8002:8000"
     networks:
       - backend
     env_file:
@@ -40,60 +26,126 @@ services:
       - postgres_video_service
       - kafka
 
+  comment_service:
+    build:
+      context: ./comment_service
+    container_name: comment_service
+    ports:
+      - "8003:8000"
+    networks:
+      - backend
+    env_file:
+      - ./comment_service/.env
+    depends_on:
+      - postgres_comment_service
+      - kafka
+
+  notification_service:
+    build:
+      context: ./notification_service
+    container_name: notification_service
+    ports:
+      - "8004:8000"
+    networks:
+      - backend
+    env_file:
+      - ./notification_service/.env
+    depends_on:
+      - postgres_notification_service
+      - kafka
+
+  recommendation_service:
+    build:
+      context: ./recommendation_service
+    container_name: recommendation_service
+    ports:
+      - "8005:8000"
+    networks:
+      - backend
+    env_file:
+      - ./recommendation_service/.env
+    depends_on:
+      - postgres_recommendation_service
+      - kafka
+
   postgres_auth_service:
     image: postgres:latest
     container_name: auth_service_db
-    environment:
-      POSTGRES_DB: ${POSTGRES_NAME}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - ./auth_service/.env
     volumes:
       - auth_service_db_data:/var/lib/postgresql/data
-    networks:
-      - backend
-
-  postgres_user_profile_service:
-    image: postgres:latest
-    container_name: user_profile_service_db
-    environment:
-      POSTGRES_DB: ${POSTGRES_NAME}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - user_profile_service_db_data:/var/lib/postgresql/data
     networks:
       - backend
 
   postgres_video_service:
     image: postgres:latest
     container_name: video_service_db
-    environment:
-      POSTGRES_DB: ${POSTGRES_NAME}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - ./video_service/.env
     volumes:
       - video_service_db_data:/var/lib/postgresql/data
     networks:
       - backend
 
+  postgres_comment_service:
+    image: postgres:latest
+    container_name: comment_service_db
+    env_file:
+      - ./comment_service/.env
+    volumes:
+      - comment_service_db_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  postgres_notification_service:
+    image: postgres:latest
+    container_name: notification_service_db
+    env_file:
+      - ./notification_service/.env
+    volumes:
+      - notification_service_db_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  postgres_recommendation_service:
+    image: postgres:latest
+    container_name: recommendation_service_db
+    env_file:
+      - ./recommendation_service/.env
+    volumes:
+      - recommendation_service_db_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
   kafka:
-    image: wurstmeister/kafka:latest
+    image: confluentinc/cp-kafka:latest
     ports:
-      - "9093:9093"
+      - "9093:9093" # Порт на хосте
     environment:
-      KAFKA_ADVERTISED_LISTENER: INSIDE://localhost:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
-      KAFKA_LISTENER_INTERNAL: INSIDE://kafka:9093
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092 # Внутренний порт для прослушивания
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9093 # Порт, который будет использоваться для внешних подключений
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL=PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093 # Для координации
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=PLAINTEXT
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 # Подключение к Zookeeper
+      - KAFKA_CREATE_TOPICS=auth-topic:1:1,video-topic:1:1,comment-topic:1:1,notification-topic:1:1,recommendation-topic:1:1
+
     depends_on:
       - zookeeper
     networks:
       - backend
 
   zookeeper:
-    image: wurstmeister/zookeeper:latest
+    image: confluentinc/cp-zookeeper:latest
     ports:
-      - "2181:2181"
+      - "2181:2181" # Порт для подключения
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
     networks:
       - backend
 
@@ -105,3 +157,7 @@ volumes:
   auth_service_db_data:
   user_profile_service_db_data:
   video_service_db_data:
+  comment_service_db_data:
+  notification_service_db_data:
+  recommendation_service_db_data:
+  

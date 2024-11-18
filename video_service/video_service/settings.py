@@ -148,7 +148,7 @@ KAFKA_VIDEO_TOPIC = "video_topic"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
@@ -161,10 +161,3 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8002",  # video_service
 ]
 CORS_ALLOW_CREDENTIALS = True
-
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
-}
