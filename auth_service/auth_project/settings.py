@@ -208,6 +208,9 @@ DEFAULT_FROM_EMAIL = "webmaster@example.com"
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "OAUTH_PKCE_ENABLED": True,
         "APP": {
             "client_id": config("GOOGLE_CLIENT_ID"),
             "secret": config("GOOGLE_CLIENT_SECRET"),
