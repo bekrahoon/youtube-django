@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if video %}Update{% else %}Create{% endif %} Video</title>
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
+    <script src="{% static 'js/scripts.js' %}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>{% if video %}Update{% else %}Create{% endif %} Video</h1>
+    </header>
+    
+    <main>
+        <form method="post" enctype="multipart/form-data" class="form-container">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-submit">
+                {% if video %}Update{% else %}Create{% endif %}
+            </button>
+        </form>
+        <a href="{% url 'video_list' %}" class="btn btn-back">Back to List</a>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Video Service</p>
+    </footer>
+</body>
+</html>
