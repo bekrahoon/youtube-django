@@ -160,4 +160,3 @@ volumes:
   comment_service_db_data:
   notification_service_db_data:
   recommendation_service_db_data:
-  
