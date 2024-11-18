@@ -1,0 +1,104 @@
+{% comment %} {% extends "base.html" %} {% endcomment %}
+{% load static %}
+{% block content %}
+<div class="container">
+    <div class="profile-detail">
+        <h2 class="text-center">Профиль пользователя: {{ user.username }}</h2>
+
+        <div class="avatar">
+            {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" alt="Avatar" class="avatar-img">
+            {% else %}
+                <img src="{% static 'img/avatar.jpg' %}" alt="Avatar" class="avatar-img">
+            {% endif %}
+        </div>
+
+        <div class="profile-info">
+            <p><strong>Биография:</strong> {{ profile.bio }}</p>
+            <p><strong>Местоположение:</strong> {{ profile.location }}</p>
+            <p><strong>Дата рождения:</strong> {{ profile.birth_date }}</p>
+            <p><strong>Создан:</strong> {{ profile.created_at }}</p>
+            <p><strong>Обновлен:</strong> {{ profile.updated_at }}</p>
+        </div>
+
+        <div class="btn btn-primary"><a href="{% url 'user_profile_app:profile_edit' profile.id %}" >Редактировать профиль</a></div>
+    </div>
+</div>
+
+<style>
+    /* Центрируем и стилизуем профиль */
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f4f7f6;
+    }
+
+    .profile-detail {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+    }
+
+    .profile-detail h2 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .avatar-img {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 auto;
+    }
+
+    .profile-info {
+        margin-top: 20px;
+        text-align: left;
+        font-size: 16px;
+        color: #555;
+    }
+
+    .profile-info p {
+        margin: 8px 0;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+        width: 80rm;
+        margin-top: 40px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<script>
+    // Простая анимация для плавного появления элементов при загрузке страницы
+    window.addEventListener('load', function() {
+        const profileDetail = document.querySelector('.profile-detail');
+        profileDetail.style.opacity = 0;
+        profileDetail.style.transition = 'opacity 0.5s ease-in-out';
+        setTimeout(function() {
+            profileDetail.style.opacity = 1;
+        }, 100);
+    });
+</script>
+
+{% endblock %}
