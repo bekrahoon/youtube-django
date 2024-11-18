@@ -172,3 +172,4 @@ client_secret.json
 staticfiles/
 
 media/
+auth_service/client_secret.json
