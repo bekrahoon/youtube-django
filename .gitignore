@@ -161,8 +161,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 migrations/
-client_secret.json
-
 
 .env
 
@@ -172,4 +170,3 @@ client_secret.json
 staticfiles/
 
 media/
-auth_service/client_secret.json

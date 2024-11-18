@@ -203,25 +203,25 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = "webmaster@example.com"
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
 
-with open(BASE_DIR / "client_secret.json") as f:
-    google_secrets = json.load(f)
+# with open(BASE_DIR / "client_secret.json") as f:
+#     google_secrets = json.load(f)
 
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "CLIENT_ID": google_secrets["web"]["client_id"],
-        "SECRET": google_secrets["web"]["client_secret"],
-        "OAUTH_PKCE_ENABLED": True,
-    }
-}
+# SOCIALACCOUNT_PROVIDERS = {
+#     "google": {
+#         "SCOPE": [
+#             "profile",
+#             "email",
+#         ],
+#         "AUTH_PARAMS": {
+#             "access_type": "online",
+#         },
+#         "CLIENT_ID": google_secrets["web"]["client_id"],
+#         "SECRET": google_secrets["web"]["client_secret"],
+#         "OAUTH_PKCE_ENABLED": True,
+#     }
+# }
 
 
 SOCIALACCOUNT_PROVIDERS = {
