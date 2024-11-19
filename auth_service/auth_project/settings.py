@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # websocket
+    "channels",
     # my apps
     "auth_app",
     "profile_app",
@@ -87,8 +89,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "auth_project.wsgi.application"
+# WSGI_APPLICATION = "auth_project.wsgi.application"
+ASGI_APPLICATION = "auth_project.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

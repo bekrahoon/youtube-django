@@ -1,8 +1,8 @@
 {% comment %} {% extends "base.html" %} {% endcomment %}
 {% load static %}
 {% block content %}
-<link rel="stylesheet" href="css/profile_detail.css">
-<script src="js/profile_detail.js"></script>
+<link rel="stylesheet" href="{% static 'css/profile_detail.css' %}">
+<script src="{% static 'js/profile_detail.js' %}"></script>
 <div class="container">
     <div class="profile-detail">
         <h2 class="text-center">Профиль пользователя: {{ profile.user.username }}</h2>
@@ -15,6 +15,20 @@
             {% endif %}
         </div>
 
+        <div class="followers">
+            {% comment %} <p><strong>Подписчики:</strong> <span id="followers-count">{{ profile.followers.count }}</span></p> {% endcomment %}
+        </div>
+        {% if profile.user != user %}
+        <div class="actions">
+            {% if user.is_authenticated %}
+                {% if user in profile.followers.all %}
+                    <button id="unsubscribe" class="btn btn-danger" onclick="toggleSubscription({{ profile.user.id }}, 'unsubscribe')">Отписаться</button>
+                {% else %}
+                    <button id="subscribe" class="btn btn-success" onclick="toggleSubscription({{ profile.user.id }}, 'subscribe')">Подписаться</button>
+                {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
         <div class="profile-info">
             <p><strong>Биография:</strong> {{ profile.bio }}</p>
             <p><strong>Местоположение:</strong> {{ profile.location }}</p>
@@ -23,7 +37,7 @@
             <p><strong>Обновлен:</strong> {{ profile.updated_at }}</p>
         </div>
         {% if profile.user == user %}
-        <div class="btn btn-primary"><a href="{% url 'profile_app:profile_edit' profile.id %}" >Редактировать профиль</a></div>
+        <div class="btn btn-primary"><a href="{% url 'profile_app:profile_edit' profile.id %}">Редактировать профиль</a></div>
         {% endif %}
     </div>
 </div>

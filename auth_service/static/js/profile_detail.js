@@ -7,3 +7,30 @@ window.addEventListener('load', function () {
         profileDetail.style.opacity = 1;
     }, 100);
 });
+
+// Создайте WebSocket соединение
+const socket = new WebSocket('ws://' + window.location.host + '/ws/subscribe/');
+
+socket.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    const followersCount = document.getElementById('followers-count');
+
+    if (data.action === 'subscribe') {
+        document.getElementById('subscribe').style.display = 'none';
+        document.getElementById('unsubscribe').style.display = 'inline-block';
+    } else if (data.action === 'unsubscribe') {
+        document.getElementById('subscribe').style.display = 'inline-block';
+        document.getElementById('unsubscribe').style.display = 'none';
+    }
+
+    followersCount.textContent = data.followers_count;
+};
+
+function toggleSubscription(userId, action) {
+    socket.send(JSON.stringify({
+        'action': action,
+        'subscriber_id': userId,
+        'subscribed_to_id': userId
+    }));
+}
+
