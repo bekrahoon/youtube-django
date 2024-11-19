@@ -8,7 +8,7 @@ window.addEventListener('load', function () {
     }, 100);
 });
 
-// Создайте WebSocket соединение
+// WebSocket соединение
 const socket = new WebSocket('ws://' + window.location.host + '/ws/subscribe/');
 
 socket.onmessage = function (event) {
@@ -27,10 +27,14 @@ socket.onmessage = function (event) {
 };
 
 function toggleSubscription(userId, action) {
-    socket.send(JSON.stringify({
-        'action': action,
-        'subscriber_id': userId,
-        'subscribed_to_id': userId
-    }));
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            'action': action,
+            'subscriber_id': userId,
+            'subscribed_to_id': userId
+        }));
+    } else {
+        console.error("WebSocket is not open.");
+    }
 }
 

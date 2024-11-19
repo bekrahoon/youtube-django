@@ -6,6 +6,8 @@ services:
       - .env
     volumes:
       - auth_service_db_data:/var/lib/postgresql/data
+    networks:
+      - auth_service_network
 
   app:
     build: .
@@ -16,12 +18,20 @@ services:
       - redis
     env_file:
       - .env
+    networks:
+      - auth_service_network
 
   redis:
     image: redis
     container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - auth_service_network
 
 volumes:
   auth_service_db_data:
+
+
+networks:
+  auth_service_network:

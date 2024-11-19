@@ -96,7 +96,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [("redis", 6379)],
         },
     },
 }
@@ -110,7 +110,7 @@ DATABASES = {
         "NAME": config("POSTGRES_NAME"),
         "USER": config("POSTGRES_USER"),
         "PASSWORD": config("POSTGRES_PASSWORD"),
-        "HOST": "auth_service_db_postgres",
+        "HOST": "auth_service_db",
         "PORT": "5432",
     }
 }
@@ -236,3 +236,4 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8002",  # video_service
 ]
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
