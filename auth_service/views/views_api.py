@@ -1,11 +1,12 @@
-from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
-from auth_app.models import CustomUser
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.response import Response
-from auth_app.serializers import LoginSerializer, RegisterSerializer
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import generics, status
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from auth_app.serializers import LoginSerializer, RegisterSerializer
+from auth_app.models import CustomUser
+from profile_app.models import UserProfile
 
 
 class RegisterView(generics.CreateAPIView):
@@ -18,6 +19,7 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
+        UserProfile.objects.create(user=user)
         return Response(
             {
                 "refresh": str(refresh),

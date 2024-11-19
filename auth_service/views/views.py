@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
-from django.views import View
-from auth_app.forms import CustomRegisterForm, CustomLoginForm
-from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib import messages
+from django.views import View
+from rest_framework_simplejwt.tokens import RefreshToken
+from auth_app.forms import CustomRegisterForm, CustomLoginForm
+from profile_app.models import UserProfile
 
 
 class RegisterView(View):
@@ -13,7 +15,8 @@ class RegisterView(View):
     def post(self, request):
         form = CustomRegisterForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            UserProfile.objects.create(user=user)
             messages.success(request, "Registration successful, please log in")
             return redirect("login")
         return render(request, "auth_app/register.html", {"form": form})
@@ -29,6 +32,8 @@ class LoginView(View):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            refresh = RefreshToken.for_user(user)
+            access = refresh.access_token
             messages.success(request, "Login successful")
             return redirect("user-detail")
         messages.error(request, "Login failed, please try again")

@@ -99,7 +99,7 @@ DATABASES = {
         "NAME": config("POSTGRES_NAME"),
         "USER": config("POSTGRES_USER"),
         "PASSWORD": config("POSTGRES_PASSWORD"),
-        "HOST": "auth_service_db",
+        "HOST": "auth_service_db_postgres",
         "PORT": "5432",
     }
 }
