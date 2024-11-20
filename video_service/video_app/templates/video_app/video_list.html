@@ -11,7 +11,7 @@
 <body>
     <header>
         <h1>Video List</h1>
-        <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
+            <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
     </header>
 
     <main>
@@ -24,7 +24,9 @@
                     <div class="video-details">
                         <h2 class="video-title"><a href="{% url 'video_update' video.pk %}">{{ video.title }}</a></h2>
                         <p class="video-description">{{ video.description }}</p>
-                        <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
+                        {% if video.user == user %}
+                            <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
+                        {% endif %}
                     </div>
                 </li>
             {% endfor %}

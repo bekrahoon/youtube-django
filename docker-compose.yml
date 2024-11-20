@@ -122,15 +122,15 @@ services:
   kafka:
     image: confluentinc/cp-kafka:latest
     ports:
-      - "9093:9093" # Порт на хосте
+      - "9092:9092" # Порт на хосте
     environment:
       - KAFKA_CFG_NODE_ID=1
       - KAFKA_CFG_PROCESS_ROLES=controller,broker
       - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092 # Внутренний порт для прослушивания
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9093 # Порт, который будет использоваться для внешних подключений
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 # Порт, который будет использоваться для внешних подключений
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL=PLAINTEXT
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093 # Для координации
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9092 # Для координации
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=PLAINTEXT
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 # Подключение к Zookeeper
       - KAFKA_CREATE_TOPICS=auth-topic:1:1,video-topic:1:1,comment-topic:1:1,notification-topic:1:1,recommendation-topic:1:1
@@ -169,3 +169,5 @@ volumes:
   comment_service_db_data:
   notification_service_db_data:
   recommendation_service_db_data:
+
+
