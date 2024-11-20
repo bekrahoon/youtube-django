@@ -26,7 +26,7 @@ class Subscription(models.Model):
         CustomUser, on_delete=models.CASCADE, related_name="subscriptions"
     )
     subscribed_to = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="subscribers"
+        CustomUser, on_delete=models.CASCADE, related_name="followers"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

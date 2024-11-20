@@ -22,9 +22,13 @@
         <div class="actions">
             {% if user.is_authenticated %}
                 {% if user in profile.followers.all %}
-                    <button id="unsubscribe" class="btn btn-danger" onclick="toggleSubscription({{ profile.user.id }}, 'unsubscribe')">Отписаться</button>
+                    <input type="hidden" id="user-id" value="{{ user.id }}">
+                    <input type="hidden" id="target-user-id" value="{{ profile.user.id }}">
+                    <button id="subscribe" class="btn btn-danger" onclick="toggleSubscription()">Отписаться</button>
                 {% else %}
-                    <button id="subscribe" class="btn btn-success" onclick="toggleSubscription({{ profile.user.id }}, 'subscribe')">Подписаться</button>
+                    <input type="hidden" id="user-id" value="{{ user.id }}">
+                    <input type="hidden" id="target-user-id" value="{{ profile.user.id }}">
+                    <button id="subscribe" class="btn btn-success" onclick="toggleSubscription()">Подписаться</button>
                 {% endif %}
             {% endif %}
         </div>

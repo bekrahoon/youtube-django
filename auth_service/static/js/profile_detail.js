@@ -8,33 +8,86 @@ window.addEventListener('load', function () {
     }, 100);
 });
 
-// WebSocket соединение
-const socket = new WebSocket('ws://' + window.location.host + '/ws/subscribe/');
+function createWebSocket() {
+    const userId = document.getElementById('user-id')?.value;
+    const targetUserId = document.getElementById('target-user-id')?.value;
 
-socket.onmessage = function (event) {
-    const data = JSON.parse(event.data);
-    const followersCount = document.getElementById('followers-count');
-
-    if (data.action === 'subscribe') {
-        document.getElementById('subscribe').style.display = 'none';
-        document.getElementById('unsubscribe').style.display = 'inline-block';
-    } else if (data.action === 'unsubscribe') {
-        document.getElementById('subscribe').style.display = 'inline-block';
-        document.getElementById('unsubscribe').style.display = 'none';
+    if (!userId || !targetUserId) {
+        console.error("Не все элементы DOM были найдены.");
+        return null;
     }
 
-    followersCount.textContent = data.followers_count;
-};
+    const url = `ws://${window.location.host}/ws/subscribe/${userId}/${targetUserId}/`;
+    console.log("WebSocket URL:", url);
 
-function toggleSubscription(userId, action) {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            'action': action,
-            'subscriber_id': userId,
-            'subscribed_to_id': userId
-        }));
+    const chatSocket = new WebSocket(url);
+
+    chatSocket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log("Получено сообщение:", data);
+        updateSubscriptionButton(data.action, data.subscribed_to_id);
+        updateFollowersCount(data.followers_count);
+    };
+
+    chatSocket.onopen = function () {
+        console.log("WebSocket соединение установлено.");
+    };
+
+    chatSocket.onerror = function (event) {
+        console.error("Ошибка WebSocket:", event);
+    };
+
+    chatSocket.onclose = function (event) {
+        console.log("WebSocket соединение закрыто:", event);
+        if (event.wasClean) {
+            console.log("Соединение было закрыто нормально.");
+        } else {
+            console.error("Ошибка при закрытии соединения:", event);
+        }
+    };
+
+    return chatSocket;
+}
+
+function toggleSubscription() {
+    const chatSocket = createWebSocket();
+
+    if (chatSocket) {
+        chatSocket.onopen = function () {
+            const button = document.getElementById('subscribe');
+            const action = button.innerText === "Подписаться" ? "subscribe" : "unsubscribe";
+            const userId = document.getElementById('user-id').value;
+            const targetUserId = document.getElementById('target-user-id').value;
+
+            chatSocket.send(JSON.stringify({
+                action: action,
+                subscriber_id: userId,
+                subscribed_to_id: targetUserId
+            }));
+            console.log("Сообщение отправлено:", { action, subscriber_id: userId, subscribed_to_id: targetUserId });
+        };
+
+        chatSocket.onerror = function (event) {
+            console.error("Ошибка WebSocket:", event);
+        };
     } else {
-        console.error("WebSocket is not open.");
+        console.error("WebSocket соединение не установлено.");
     }
+}
+
+function updateSubscriptionButton(action, subscribed_to_id) {
+    const button = document.getElementById('subscribe');
+    if (action === "subscribe") {
+        button.innerText = "Отписаться";
+        button.className = "btn btn-danger";
+    } else if (action === "unsubscribe") {
+        button.innerText = "Подписаться";
+        button.className = "btn btn-success";
+    }
+}
+
+function updateFollowersCount(count) {
+    const followersCount = document.getElementById('followers-count');
+    followersCount.innerText = count;
 }
 

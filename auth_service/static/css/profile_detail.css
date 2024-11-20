@@ -59,3 +59,19 @@
     .btn-primary:hover {
         background-color: #0056b3;
     }
+
+    .btn-success {
+        background-color: #22a816;
+        transition: 0.5s;
+    }
+    .btn-success:hover {
+        background-color: #45d638;
+    }
+    
+    .btn-danger {
+        background-color: #810b0b;
+        transition: 0.5s;
+    }
+    .btn-danger:hover {
+        background-color: #450707;
+    }

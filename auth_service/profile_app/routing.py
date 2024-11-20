@@ -1,6 +1,9 @@
-from django.urls import path
-from . import consumers
+from django.urls import re_path
+from .consumers import SubscribeConsumer
 
 websocket_urlpatterns = [
-    path("ws/subscribe/", consumers.SubscribeConsumer.as_asgi()),
+    re_path(
+        r"^ws/subscribe/(?P<user_id>[^/]+)/(?P<target_user_id>[^/]+)/$",
+        SubscribeConsumer.as_asgi(),
+    ),
 ]
