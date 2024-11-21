@@ -19,11 +19,13 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
+        access_token = refresh.access_token  # Генерируем AccessToken
+
         UserProfile.objects.create(user=user)
         return Response(
             {
                 "refresh": str(refresh),
-                "access": str(refresh.access_token),
+                "access": str(access_token),
             },
             status=status.HTTP_201_CREATED,
         )

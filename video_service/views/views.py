@@ -1,7 +1,20 @@
+import mimetypes
+from django.http import FileResponse, JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views import View
+from django.views.generic import (
+    DetailView,
+    ListView,
+    CreateView,
+    UpdateView,
+    DeleteView,
+)
 from video_app.models import Video
 from video_app.forms import VideoForm
+from video_app.tasks import proccess_video
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class VideoListView(ListView):
@@ -12,12 +25,31 @@ class VideoListView(ListView):
     context_object_name = "videos"
 
 
+class VideoDetailView(DetailView):
+    """Отображение видео"""
+
+    model = Video
+    template_name = "video_app/video_watch.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = self.object.title
+        return context
+
+
 class VideoCreateView(CreateView):
     """Создание нового видео"""
 
     model = Video
     form_class = VideoForm
     template_name = "video_app/video_form.html"
+
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse("video_list")  # После создания перенаправляем на список видео
@@ -27,16 +59,25 @@ class VideoUpdateView(UpdateView):
     """Обновление видео"""
 
     model = Video
-    form_class = VideoForm
     template_name = "video_app/video_form.html"
+    form_class = VideoForm
+    permission_classes = [IsAuthenticated]
 
     def get_success_url(self):
-        return reverse("video_list")  # После обновления перенаправляем на список видео
+        return reverse("video_list")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["video"] = self.object  # Передаем объект видео в контекст
+        context["video"] = self.object
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        video = self.get_object()
+        if video.user != request.user:
+            return JsonResponse(
+                {"error": "You don't have permission to access this video"}, status=403
+            )
+        return super().dispatch(request, *args, **kwargs)
 
 
 class VideoDeleteView(DeleteView):
@@ -48,3 +89,33 @@ class VideoDeleteView(DeleteView):
 
     def get_success_url(self):
         return reverse("video_list")  # После удаления перенаправляем на список видео
+
+    def dispatch(self, request, *args, **kwargs):
+        video = self.get_object()
+        if video.user != request.user:
+            return JsonResponse(
+                {"error": "You don't have permission to access this video"}, status=403
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+
+class StreamVideoView(View):
+    def get(self, request, video_id):
+        video = get_object_or_404(Video, id=video_id)
+        file_path = video.file.path
+        mime_type, _ = mimetypes.guess_type(file_path)
+        response = FileResponse(open(file_path, "rb"), content_type=mime_type)
+        response["Content-Disposition"] = f"inline; filename={video.title}"
+        return response
+
+
+class TranscodeVideoView(View):
+    def post(self, request, video_id):
+        video = get_object_or_404(Video, id=video_id)
+        proccess_video.delay(video.id)
+        return JsonResponse({"status": "success", "message": "Transcoding started"})
+
+
+class LiveStreamView(View):
+    def get(self, request):
+        return render(request, "video_app/live_stream.html")

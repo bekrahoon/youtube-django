@@ -19,12 +19,13 @@
             {% for video in videos %}
                 <li class="video-item">
                     <div class="video-preview">
-                        <img src="{{ video.preview.url }}" alt="Preview" class="preview-image">
+                        <a href="{% url "video_detail" video.pk %}"><img src="{{ video.preview.url }}" alt="Preview" class="preview-image"></a>
                     </div>
                     <div class="video-details">
-                        <h2 class="video-title"><a href="{% url 'video_update' video.pk %}">{{ video.title }}</a></h2>
+                        <a href="{% url "video_detail" video.pk %}"><h2 class="video-title">{{ video.title }}</h2></a>
                         <p class="video-description">{{ video.description }}</p>
                         {% if video.user == user %}
+                            <h6><a href="{% url 'video_update' video.pk %}">Change</a></h6>
                             <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
                         {% endif %}
                     </div>

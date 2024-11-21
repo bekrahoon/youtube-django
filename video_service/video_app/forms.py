@@ -10,6 +10,7 @@ class VideoForm(forms.ModelForm):
         fields = (
             "title",
             "description",
+            "preview",
             "file",
             "duration",
         )

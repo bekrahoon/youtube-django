@@ -8,9 +8,7 @@ from profile_app.models import UserProfile
 from confluent_kafka import Producer, KafkaException
 from rest_framework.response import Response
 
-# Настройка логирования
-# logger = logging.getLogger(__name__)  # Не нужно, если используем print
-
+# Настройка Kafka
 kafka_conf = {
     "bootstrap.servers": "kafka:9092",  # Используйте имя контейнера Kafka в сети Docker
     "client.id": "auth-topic",
@@ -21,11 +19,9 @@ producer = Producer(kafka_conf)
 
 def delivery_callback(err, msg):
     if err is not None:
-        print(f"ОШИБКА: {err}")  # Замените на print
+        print(f"ОШИБКА: {err}")
     else:
-        print(
-            f"Сообщение {msg.topic()}[{msg.partition()}] доставлено успешно."
-        )  # Замените на print
+        print(f"Сообщение {msg.topic()}[{msg.partition()}] доставлено успешно.")
 
 
 class RegisterView(View):
@@ -43,42 +39,10 @@ class RegisterView(View):
             # Авторизуем пользователя после регистрации
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
-            # Проверка подключения к Kafka
-            try:
-                producer.produce(
-                    "test-topic", key="test", value="test", callback=delivery_callback
-                )
-                producer.flush()
-                print("Подключение к Kafka успешно!")
-            except KafkaException as e:
-                print(f"Ошибка при подключении к Kafka: {e}")
-
-            # Отправка сообщения в Kafka о регистрации пользователя
-            registretion_message = {
-                "user_id": user.id,
-                "username": user.username,
-                "email": user.email,
-            }
-            try:
-                producer.produce(
-                    "user-registered-topic",
-                    key="user_registered",
-                    value=str(registretion_message),
-                    callback=delivery_callback,
-                )
-                producer.flush()
-                print(
-                    "Сообщение о регистрации пользователя успешно отправлено в Kafka."
-                )
-            except KafkaException as e:
-                print(f"Ошибка при отправке сообщения в Kafka: {e}")
-
+            # Генерация JWT токена
             refresh = RefreshToken.for_user(user)
-            access = refresh.access_token
+            access_token = refresh.access_token
             messages.success(request, "Registration successful")
-
-            # Логируем ID пользователя перед редиректом
-            print(f"Redirecting to profile with ID: {user.id}")
 
             # Перенаправляем на страницу профиля пользователя
             return redirect("profile_app:profile_detail", pk=user.id)
@@ -98,40 +62,13 @@ class LoginView(View):
             user = form.get_user()
             login(request, user)
 
-            # Проверка подключения к Kafka
-            try:
-                producer.produce(
-                    "test-topic", key="test", value="test", callback=delivery_callback
-                )
-                producer.flush()
-                print("Подключение к Kafka успешно!")  # Замените на print
-            except KafkaException as e:
-                print(f"Ошибка при подключении к Kafka: {e}")  # Замените на print
-
-            # Отправка сообщения в Kafka о входе пользователя
-            login_message = {
-                "user_id": user.id,
-                "username": user.username,
-                "email": user.email,
-            }
-            try:
-                producer.produce(
-                    "user-loged-in-topik",
-                    key="user_loged_in",
-                    value=str(login_message),
-                    callback=delivery_callback,
-                )
-                print(
-                    "Сообщение о входе пользователя успешно отправлено в Kafka."
-                )  # Замените на print
-            except KafkaException as e:
-                print(
-                    f"Ошибка при отправке сообщения в Kafka: {e}"
-                )  # Замените на print
-
+            # Генерация JWT токена
             refresh = RefreshToken.for_user(user)
-            access = refresh.access_token
+            access_token = refresh.access_token
             messages.success(request, "Login successful")
+
+            # Перенаправляем на страницу профиля пользователя
             return redirect("profile_app:profile_detail", pk=user.id)
+
         messages.error(request, "Login failed, please try again")
         return render(request, "auth_app/login.html", {"form": form})

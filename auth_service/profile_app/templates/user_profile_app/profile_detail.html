@@ -33,6 +33,8 @@
             {% endif %}
         </div>
         {% endif %}
+        
+        {% if profile.user == user %}
         <div class="profile-info">
             <p><strong>Биография:</strong> {{ profile.bio }}</p>
             <p><strong>Местоположение:</strong> {{ profile.location }}</p>
@@ -40,67 +42,9 @@
             <p><strong>Создан:</strong> {{ profile.created_at }}</p>
             <p><strong>Обновлен:</strong> {{ profile.updated_at }}</p>
         </div>
-        {% if profile.user == user %}
         <div class="btn btn-primary"><a href="{% url 'profile_app:profile_edit' profile.id %}">Редактировать профиль</a></div>
+        <div class="btn btn-primary"><a href="{% url 'http://127.0.0.1:8001/video/' %}">Создать видео!?"</a></div>
         {% endif %}
     </div>
 </div>
-
-<style>
-    .btn {
-        position: relative;
-        padding: 10px 20px;
-        font-size: 16px;
-        color: white;
-        border: none;
-        cursor: pointer;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .btn-success {
-        background-color: #22a816;
-        box-shadow: 0px 4px 10px rgba(34, 168, 22, 0.4);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .btn-success:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 8px 20px rgba(69, 214, 56, 0.6);
-    }
-
-    .btn-danger {
-        background-color: #810b0b;
-        box-shadow: 0px 4px 10px rgba(129, 11, 11, 0.4);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .btn-danger:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 8px 20px rgba(69, 7, 7, 0.6);
-    }
-
-    .effect {
-        position: absolute;
-        border-radius: 50%;
-        pointer-events: none;
-        animation: none;
-    }
-
-    @keyframes splash {
-        to {
-            transform: scale(4);
-            opacity: 0;
-        }
-    }
-
-    @keyframes drip {
-        to {
-            top: 300px;
-            opacity: 0;
-        }
-    }
-    
-</style>
-
 {% endblock %}

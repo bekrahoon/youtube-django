@@ -4,6 +4,8 @@ from video_app.models import Video
 from video_app.serializers import VideoSerializer
 from confluent_kafka import Producer
 
+from video_app.permissions import IsOwner
+
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
@@ -11,8 +13,10 @@ class VideoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
+        print(f"User from request: {self.request.user}")
         video = serializer.save(user=self.request.user)
-        # Отправка сообщения в Kafka после загрузки видео
-        producer = Producer(bootstrap_servers=["localhost:9092"])
-        producer.send("video_topic", b"New video uploaded: %s" % video.id)
-        producer.flush()
+
+    def get_permissions(self):
+        if self.action in ["update", "destroy"]:
+            return [IsAuthenticated(), IsOwner()]
+        return [IsAuthenticated()]

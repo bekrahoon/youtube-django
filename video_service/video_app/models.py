@@ -14,10 +14,14 @@ class Video(models.Model):
     file = models.FileField(upload_to="videos/")
     preview = models.ImageField(upload_to="preview/")
     duration = models.DurationField(null=True, blank=True)
+    processed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(
-        max_length=20, default="uploaded"
-    )  # uploaded, processing, completed
 
     def __str__(self):
         return self.title
+
+
+class VideoQuality(models.Model):
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="qualities")
+    resolution = models.CharField(max_length=10)  # пример, '360p', '720p'
+    file_path = models.FileField(upload_to="video/processed")

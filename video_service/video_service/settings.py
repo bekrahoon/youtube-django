@@ -77,8 +77,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "video_service.wsgi.application"
+# WSGI_APPLICATION = "video_service.wsgi.application"
+ASGI_APPLICATION = "video_service.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.getenv("REDIS_URL", "redis://redis:6379")],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -151,7 +160,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
@@ -161,3 +170,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8002",  # video_service
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
