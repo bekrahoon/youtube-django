@@ -7,7 +7,7 @@ from video_app.models import Video, VideoQuality
 @shared_task
 def proccess_video(video_id, resolution):
     video = Video.objects.get(id=video_id)
-    output_dir = "media/videos/processed/"
+    output_dir = "media/videos/"
     output_path = os.path.join(output_dir, f"{video.id}_{resolution}.mp4")
 
     # Сопоставление разрешений
@@ -36,11 +36,20 @@ def proccess_video(video_id, resolution):
         "-preset",
         "fast",
         "-crf",
-        "23",
+        "28",
         output_path,
     ]
 
-    subprocess.run(command)
+    # Выполнение команды ffmpeg
+    result = subprocess.run(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        raise RuntimeError(f"FFmpeg failed: {result.stderr.decode('utf-8')}")
+
+    # Проверка создания выходного файла
+    if not os.path.exists(output_path):
+        raise FileNotFoundError(f"File not created: {output_path}")
+
+    # Сохранение данных о видео
     VideoQuality.objects.create(
         video=video, resolution=resolution, file_path=output_path
     )

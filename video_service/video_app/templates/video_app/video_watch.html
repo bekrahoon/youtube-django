@@ -67,6 +67,14 @@
             alert("There was an error starting the transcoding process.");
         });
     };
+
+    document.getElementById('resolution-select').onchange = function() {
+        const resolution = this.value;
+        const videoElement = document.querySelector('video source');
+        videoElement.src = `/media/videos/${videoId}_${resolution}.mp4`;
+        videoElement.parentElement.load();  // Перезагрузка плеера
+    };
+    
 </script>
 
 </body>

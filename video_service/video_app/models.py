@@ -29,4 +29,4 @@ class Video(models.Model):
 class VideoQuality(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="qualities")
     resolution = models.CharField(max_length=10)  # пример, '360p', '720p'
-    file_path = models.FileField(upload_to="video/processed")
+    file_path = models.FileField(upload_to="video/")

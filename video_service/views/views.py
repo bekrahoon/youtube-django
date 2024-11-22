@@ -73,9 +73,7 @@ class VideoCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        print(f"Попытка создать видео от пользователя: {self.request.user}")
         response = super().form_valid(form)
-        print(f"Видео успешно создано: ID={self.object.id}, Title={self.object.title}")
 
         # Отправляем событие в Kafka после успешного создания видео
         event_data = {
@@ -84,7 +82,6 @@ class VideoCreateView(CreateView):
             "title": self.object.title,
             "timestamp": self.object.created_at.isoformat(),
         }
-        print(f"Подготовка данных для Kafka: {event_data}")
         try:
             send_event(
                 topic="video_uploads",
@@ -125,6 +122,33 @@ class VideoUpdateView(UpdateView):
                 {"error": "You don't have permission to access this video"}, status=403
             )
         return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        response = super().form_valid(form)
+
+        # Отправляем событие в Kafka после успешного создания видео
+        event_data = {
+            "user_id": self.request.user.id,
+            "video_id": self.object.id,
+            "title": self.object.title,
+            "timestamp": self.object.created_at.isoformat(),
+        }
+        try:
+            send_event(
+                topic="video_uploads",
+                key=str(self.object.id),
+                value=json.dumps(event_data),
+            )
+            print("Событие успешно отправлено в Kafka")
+        except Exception as e:
+            print(f"Ошибка при отправке события в Kafka: {str(e)}")
+
+        return response
+
+    def get_success_url(self):
+        print("Перенаправление на страницу списка видео")
+        return reverse("video_list")  # После создания перенаправляем на список видео
 
 
 class VideoDeleteView(DeleteView):
