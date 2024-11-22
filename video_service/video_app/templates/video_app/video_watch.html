@@ -10,8 +10,8 @@
 </head>
 <body>
     <header>
-        <h1>{{ object.title }}</h1>
-            <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
+        <h1><a href="{% url "video_list" %}" style="color:white;">Video List</a></h1>
+        <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
     </header>
 
     <main>
