@@ -10,8 +10,19 @@
 </head>
 <body>
     <header>
-        <h1>Video List</h1>
-            <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
+        <h2>Список видео</h2> 
+        <form method="get" action="{% url 'video_list' %}">
+            <div>
+                {{ filter_form.query.label_tag }}
+                {{ filter_form.query }}
+            </div>
+            <div>
+                {{ filter_form.category.label_tag }}
+                {{ filter_form.category }}
+            </div>
+            <button type="submit" class="btn btn-primary">Искать</button>
+        </form>
+        <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
     </header>
 
     <main>
@@ -24,8 +35,9 @@
                     <div class="video-details">
                         <a href="{% url "video_detail" video.pk %}"><h2 class="video-title">{{ video.title }}</h2></a>
                         <p class="video-description">{{ video.description }}</p>
+                        <h3>{{ video.category }}</h3>
                         {% if video.user == user %}
-                            <h6><a href="{% url 'video_update' video.pk %}">Change</a></h6>
+                            <button class="btn btn-delete"><a href="{% url 'video_update' video.pk %}">Change</a></button>
                             <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
                         {% endif %}
                     </div>

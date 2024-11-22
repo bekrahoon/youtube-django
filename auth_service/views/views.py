@@ -5,8 +5,7 @@ from django.views import View
 from rest_framework_simplejwt.tokens import RefreshToken
 from auth_app.forms import CustomRegisterForm, CustomLoginForm
 from profile_app.models import UserProfile
-from confluent_kafka import Producer, KafkaException
-from rest_framework.response import Response
+from confluent_kafka import Producer
 
 # Настройка Kafka
 kafka_conf = {

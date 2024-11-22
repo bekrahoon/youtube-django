@@ -8,9 +8,14 @@ class Video(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="videos"
     )  # Связь с пользователем из auth_service
-
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    category = models.CharField(
+        max_length=100, null=True, blank=True
+    )  # Простая категория
+    keywords = models.TextField(
+        max_length=100, null=True, blank=True
+    )  # Ключевые слова через запятую
     file = models.FileField(upload_to="videos/")
     preview = models.ImageField(upload_to="preview/")
     duration = models.DurationField(null=True, blank=True)

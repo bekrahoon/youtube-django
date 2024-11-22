@@ -13,18 +13,27 @@
         <h1><a href="{% url "video_list" %}" style="color:white;">Video List</a></h1>
         <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
     </header>
-
     <main>
         <div class="video-list">
                 <div class="video-item">
+                    <h2 class="video-title">{{ object.title }}</h2>
                     <video width="100%" height="660px" controls>
-                        <source src="{{ object.file.url }}" type="video/mp4">
+                        <source src="{% url "stream_video" object.pk %}" type="video/mp4">
+                        Your browser does not support the video tag.
                     </video>
+                    <!-- Выпадающий список для выбора разрешения -->
+                    <select id="resolution-select">
+                        <option value="360p">360p</option>
+                        <option value="480p">480p</option>
+                        <option value="720p">720p</option>
+                        <option value="1080p">1080p</option>
+                    </select>
+                    <!-- Кнопка для запуска транскодирования -->
+                    <button id="transcode-button">Start Transcoding</button>
                     <div class="video-details">
-                        <h2 class="video-title">{{ object.title }}</h2>
                         <p class="video-description">{{ object.description }}</p>
                         {% if object.user == user %}
-                            <h6 class="btn"><a href="{% url 'video_update' video.pk %}">Change</a></h6>
+                            <button class="btn btn-change"><a href="{% url 'video_update' video.pk %}">Change</a></button>
                             <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
                         {% endif %}
                     </div>
@@ -35,6 +44,30 @@
     <footer>
         <p>&copy; 2024 Video Service</p>
     </footer>
+
+<script>
+    document.getElementById('transcode-button').onclick = function() {
+        const resolution = document.getElementById('resolution-select').value;
+        fetch("{% url 'transcode_video' pk=video.id %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({resolution: resolution})
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("There was an error starting the transcoding process.");
+        });
+    };
+</script>
 
 </body>
 </html>

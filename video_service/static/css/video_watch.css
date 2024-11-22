@@ -54,6 +54,15 @@ a:hover {
 .btn-delete:hover {
     background-color: #c0392b;
 }
+.btn-change {
+    background-color: #9ab018;
+    color: white;
+    margin-top: 10px;
+}
+
+.btn-change:hover {
+    background-color: #b4df26;
+}
 
 .video-list {
     display: flex;

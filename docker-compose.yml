@@ -24,6 +24,7 @@ services:
       - backend
     env_file:
       - ./video_service/.env
+    command: sh -c "python manage.py runserver 0.0.0.0:8000 & celery -A video_service worker --loglevel=info"
     depends_on:
       - postgres_video_service
       - kafka

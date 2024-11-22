@@ -84,7 +84,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [os.getenv("REDIS_URL", "redis://redis:6379")],
+            "hosts": [("redis", 6379)],
         },
     },
 }
@@ -152,8 +152,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-KAFKA_BOOTSTRAP_SERVERS = ["localhost:9092"]
-KAFKA_VIDEO_TOPIC = "video_topic"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -166,11 +164,12 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",  # auth_service
-    "http://localhost:8001",  # user_profile_service
-    "http://localhost:8002",  # video_service
+    "http://localhost:8001",  # video_service
+    "http://localhost:8002",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"

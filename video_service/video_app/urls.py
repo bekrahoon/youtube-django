@@ -13,6 +13,7 @@ from views.views import (
 
 urlpatterns = [
     path("", VideoListView.as_view(), name="video_list"),  # Список видео
+    path("detail/<int:pk>", VideoDetailView.as_view(), name="video_detail"),
     path("create/", VideoCreateView.as_view(), name="video_create"),  # Создание видео
     path(
         "update/<int:pk>/", VideoUpdateView.as_view(), name="video_update"
@@ -20,12 +21,11 @@ urlpatterns = [
     path(
         "delete/<int:pk>/", VideoDeleteView.as_view(), name="video_delete"
     ),  # Удаление видео
-    path("stream/<int:video_id>/", StreamVideoView.as_view(), name="stream_video"),
+    path("stream/<int:pk>/", StreamVideoView.as_view(), name="stream_video"),
     path(
-        "transcode/<int:video_id>/",
+        "transcode/<int:pk>/",
         TranscodeVideoView.as_view(),
         name="transcode_video",
     ),
     path("live/", LiveStreamView.as_view(), name="live_stream"),
-    path("detail/<int:pk>", VideoDetailView.as_view(), name="video_detail"),
 ]

@@ -1,38 +1,48 @@
+import os
 import subprocess
 from celery import shared_task
 from video_app.models import Video, VideoQuality
 
 
 @shared_task
-def proccess_video(video_id):
+def proccess_video(video_id, resolution):
     video = Video.objects.get(id=video_id)
-    resolutions = ["360p", "480p", "720p", "1080p"]
-    for res in resolutions:
-        output_path = f"media/videos/processed/{video.id}_{res}.mp4"
-        if res == "360":
-            resolution = "640x360"
-        elif res == "480":
-            resolution = "854x480"
-        elif res == "720":
-            resolution = "1280x720"
-        elif res == "1080":
-            resolution = "1920x1080"
+    output_dir = "media/videos/processed/"
+    output_path = os.path.join(output_dir, f"{video.id}_{resolution}.mp4")
 
-        command = [
-            "ffmpeg",
-            "-i",
-            video.original_file.path,
-            "-vf",
-            f"scale={resolution}",
-            "-c:v",
-            "libx264",
-            "-preset",
-            "fast",
-            "-crf",
-            "23",
-            output_path,
-        ]
-        subprocess.run(command)
-        VideoQuality.objects.create(video=video, resolution=res, file_path=output_path)
+    # Сопоставление разрешений
+    resolution_map = {
+        "360p": "640x360",
+        "480p": "854x480",
+        "720p": "1280x720",
+        "1080p": "1920x1080",
+    }
+
+    if resolution not in resolution_map:
+        raise ValueError("Invalid resolution")
+
+    # Создание директории, если она не существует
+    os.makedirs(output_dir, exist_ok=True)
+
+    command = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        video.file.path,
+        "-vf",
+        f"scale={resolution_map[resolution]}",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "23",
+        output_path,
+    ]
+
+    subprocess.run(command)
+    VideoQuality.objects.create(
+        video=video, resolution=resolution, file_path=output_path
+    )
     video.processed = True
     video.save()

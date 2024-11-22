@@ -10,7 +10,21 @@ class VideoForm(forms.ModelForm):
         fields = (
             "title",
             "description",
+            "category",
             "preview",
             "file",
             "duration",
         )
+
+
+class VideoFilterForm(forms.Form):
+    query = forms.CharField(
+        required=False,
+        label="Поиск",
+        widget=forms.TextInput(attrs={"placeholder": "Введите ключевое слово"}),
+    )
+    category = forms.CharField(
+        required=False,
+        label="Категория",
+        widget=forms.TextInput(attrs={"placeholder": "Введите категорию"}),
+    )
