@@ -10,7 +10,7 @@
 </head>
 <body>
     <header>
-        <h2>Список видео</h2> 
+        <h1><a href="{% url "video_list" %}" style="color:white;">Video List</a></h1>
         <form method="get" action="{% url 'video_list' %}">
             <div>
                 {{ filter_form.query.label_tag }}

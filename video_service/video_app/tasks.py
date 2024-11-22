@@ -2,11 +2,16 @@ import os
 import subprocess
 from celery import shared_task
 from video_app.models import Video, VideoQuality
+from django.core.exceptions import ObjectDoesNotExist
 
 
 @shared_task
 def proccess_video(video_id, resolution):
-    video = Video.objects.get(id=video_id)
+    try:
+        video = Video.objects.get(id=video_id)
+    except ObjectDoesNotExist:
+        raise ValueError(f"Video with ID {video_id} does not exist.")
+
     output_dir = "media/videos/"
     output_path = os.path.join(output_dir, f"{video.id}_{resolution}.mp4")
 
@@ -19,29 +24,46 @@ def proccess_video(video_id, resolution):
     }
 
     if resolution not in resolution_map:
-        raise ValueError("Invalid resolution")
+        raise ValueError(f"Invalid resolution: {resolution}")
 
     # Создание директории, если она не существует
     os.makedirs(output_dir, exist_ok=True)
 
     command = [
         "ffmpeg",
-        "-y",
+        "-v",
+        "error",
         "-i",
         video.file.path,
         "-vf",
         f"scale={resolution_map[resolution]}",
+        "-preset",
+        "slow",
         "-c:v",
         "libx264",
-        "-preset",
-        "fast",
+        "-strict",
+        "experimental",
+        "-c:a",
+        "aac",
         "-crf",
+        "20",
+        "-maxrate",
+        "500k",
+        "-bufsize",
+        "500k",
+        "-r",
         "28",
+        "-f",
+        "mp4",
         output_path,
+        "-y",
     ]
 
     # Выполнение команды ffmpeg
     result = subprocess.run(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    # Log stdout and stderr
+    print(result.stdout.decode("utf-8"))
     if result.returncode != 0:
         raise RuntimeError(f"FFmpeg failed: {result.stderr.decode('utf-8')}")
 
