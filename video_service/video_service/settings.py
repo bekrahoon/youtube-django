@@ -165,7 +165,9 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",  # auth_service
     "http://localhost:8001",  # video_service
-    "http://localhost:8002",
+    "http://localhost:8002",  # comment_service
+    "http://localhost:8003",  # comment_service
+    "http://localhost:8004",  # comment_service
 ]
 CORS_ALLOW_CREDENTIALS = True
 

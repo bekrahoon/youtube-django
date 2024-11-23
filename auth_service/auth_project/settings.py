@@ -235,6 +235,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",  # auth_service
     "http://localhost:8001",  # user_profile_service
     "http://localhost:8002",  # video_service
+    "http://localhost:8003",  # video_service
+    "http://localhost:8004",  # video_service
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
