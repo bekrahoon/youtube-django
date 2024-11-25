@@ -84,7 +84,7 @@ class VideoCreateView(CreateView):
         }
         try:
             send_event(
-                topic="video_uploads",
+                topic="video-topic",
                 key=str(self.object.id),
                 value=json.dumps(event_data),
             )

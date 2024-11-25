@@ -165,9 +165,6 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
 }
 
 
@@ -239,4 +236,17 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8004",  # video_service
 ]
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:8001",
+    "http://localhost:8002",
+    "http://localhost:8003",
+    "http://localhost:8004",
+]
+
+CORS_ALLOW_HEADERS = [
+    "authorization",  # для передачи токенов аутентификации
+    "content-type",
+    "accept",
+    "x-requested-with",
+]

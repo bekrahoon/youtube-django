@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from profile_app.models import UserProfile
 from profile_app.serializers import UserProfileSerializer
 from profile_app.permissions import IsOwnerOrReadOnly
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -17,6 +18,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    authentication_classes = [JWTAuthentication]
 
     def perform_create(self, serializer):
         # Создание профиля пользователя

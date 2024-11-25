@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from video_app.models import Video
 from video_app.serializers import VideoSerializer
 from confluent_kafka import Producer
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from video_app.permissions import IsOwner
 
 kafka_config = {
@@ -25,14 +25,14 @@ def send_kafka_message(topic, key, value):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    permission_classes = [IsAuthenticated]
+    authentication_classes = JWTAuthentication
 
     def perform_create(self, serializer):
         print(f"Пользователь из запроса: {self.request.user}")
         video = serializer.save(user=self.request.user)
         # Отправка сообщения в Kafka при создании видео
         send_kafka_message(
-            topic="video_events",
+            topic="video-topic",
             key="video created",
             value=f"Video created: {video.title} by {video.user.username}",
         )
@@ -42,7 +42,7 @@ class VideoViewSet(viewsets.ModelViewSet):
         video = serializer.save()
         # Отправка сообщения в Kafka при обновлении видео
         send_kafka_message(
-            topic="video_events",
+            topic="video-topic",
             key="video updated",
             value=f"Video updated: {video.title} by {video.user.username}",
         )
@@ -53,7 +53,7 @@ class VideoViewSet(viewsets.ModelViewSet):
         instance.delete()
         # Отправка сообщения в Kafka при удалении видео
         send_kafka_message(
-            topic="video_events",
+            topic="video-topic",
             key="video destroyd",
             value=f"Video destroyd: {video_title} by {video_user}",
         )

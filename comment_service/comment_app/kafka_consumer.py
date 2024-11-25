@@ -8,9 +8,11 @@ def get_video_data(video_id):
     """
     consumer_conf = {
         "bootstrap.servers": "kafka:9092",  # Адрес Kafka-брокера
-        "group.id": "video-service-group",
+        "group.id": "video_group",
         "auto.offset.reset": "earliest",  # Или 'latest' в зависимости от требований
         "enable.auto.commit": True,
+        "session.timeout.ms": 6000,  # Время ожидания для подтверждения активности потребителя
+        "max.poll.interval.ms": 300000,  # Максимальное время между вызовами poll
     }
     consumer = Consumer(consumer_conf)
     topic = "video-topic"
@@ -35,7 +37,6 @@ def get_video_data(video_id):
             video_data = json.loads(msg.value().decode("utf-8"))
             if video_data["video_id"] == video_id:
                 return video_data
-
     finally:
         consumer.close()
 

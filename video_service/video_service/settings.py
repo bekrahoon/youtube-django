@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 from decouple import config
 import os
@@ -157,19 +158,53 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
+}
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",  # auth_service
-    "http://localhost:8001",  # video_service
-    "http://localhost:8002",  # comment_service
-    "http://localhost:8003",  # comment_service
-    "http://localhost:8004",  # comment_service
+    "http://localhost:8001",  # user_profile_service
+    "http://localhost:8002",  # video_service
+    "http://localhost:8003",  # video_service
+    "http://localhost:8004",  # video_service
 ]
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:8001",
+    "http://localhost:8002",
+    "http://localhost:8003",
+    "http://localhost:8004",
+]
+
+CORS_ALLOW_HEADERS = [
+    "authorization",  # для передачи токенов аутентификации
+    "content-type",
+    "accept",
+    "x-requested-with",
+]
+
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")

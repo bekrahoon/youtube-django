@@ -154,6 +154,38 @@
             </div>
         </div>
     </div>
-
+    <script>
+        // Получаем JWT токен из localStorage
+        const token = localStorage.getItem('jwt_token'); 
+    
+        // Функция для отправки запроса с токеном
+        function sendRequestToService(url, data) {
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`, // Добавляем JWT токен в заголовок Authorization
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Request successful:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    
+        // Пример использования:
+        // Когда форма зарегистрирована или пользователь вошел в систему, отправляем JWT токен в сервисы
+        if (token) {
+            sendRequestToService('http://localhost:8000/api/some-endpoint', { user_data: 'example' }); // auth_service
+            sendRequestToService('http://localhost:8001/api/some-endpoint', { user_data: 'example' }); // video_service
+            sendRequestToService('http://localhost:8002/api/some-endpoint', { user_data: 'example' }); // comment_service
+            sendRequestToService('http://localhost:8003/api/some-endpoint', { user_data: 'example' }); // notification_service
+            sendRequestToService('http://localhost:8004/api/some-endpoint', { user_data: 'example' }); // recommendation_service
+        }
+    </script>
 </body>
 </html>
