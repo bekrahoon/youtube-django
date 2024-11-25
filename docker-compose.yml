@@ -43,6 +43,7 @@ services:
     depends_on:
       - postgres_comment_service
       - kafka
+      - redis
 
   notification_service:
     build:

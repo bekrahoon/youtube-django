@@ -9,7 +9,7 @@ from confluent_kafka import Producer
 
 # Настройка Kafka
 kafka_conf = {
-    "bootstrap.servers": "kafka:9092",  # Используйте имя контейнера Kafka в сети Docker
+    "bootstrap.servers": "kafka:9092",
     "client.id": "auth-topic",
 }
 

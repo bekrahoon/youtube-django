@@ -1,0 +1,19 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+{% for item in comments_with_details %}
+  <div>
+    <p><strong>Комментарий:</strong> {{ item.comment.text }}</p>
+    <p><strong>Пользователь:</strong> {{ item.user.username }}</p>
+    <p><strong>Видео:</strong> {{ item.video.title }}</p>
+    <p><strong>Дата:</strong> {{ item.comment.created_at }}</p>
+  </div>
+{% endfor %}
+</body>
+</html>

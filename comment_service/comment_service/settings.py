@@ -47,7 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corseheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -75,9 +75,18 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "comment_service.wsgi.application"
+# WSGI_APPLICATION = "comment_service.wsgi.application"
 
+ASGI_APPLICATION = "comment_service.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -135,14 +144,15 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = [
-    {
-        "DEFAULT_AUTHENTICATION_CLASSES": [
-            "rest_framework_simplejwt.authentication.JWTAuthentication"
-        ]
-    },
-    {"DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"]},
-]
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
@@ -151,4 +161,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8003",
     "http://localhost:8004",
 ]
-CORS_ALLOWED_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+
+USER_SERVICE_URL = "http://localhost:8000/api/"

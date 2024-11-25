@@ -1,14 +1,9 @@
 from django.db import models
 
-from auth_service.auth_app.models import CustomUser
-from video_service.video_app.models import Video
-
 
 class Comment(models.Model):
-    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="comments")
-    user = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="comments"
-    )
+    user_id = models.IntegerField()
+    video_id = models.IntegerField()
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -1,10 +1,9 @@
 from comment_app.models import Comment
 from comment_app.serializers import CommentSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from comment_service.comment_app.permission import IsOwner
+from comment_app.permission import IsOwner
 
 
 class CommentViewSet(ModelViewSet):
