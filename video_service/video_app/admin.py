@@ -6,6 +6,7 @@ from .models import Video, VideoQuality
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "title",
         "description",
         "file",
@@ -20,6 +21,7 @@ class VideoAdmin(admin.ModelAdmin):
 @admin.register(VideoQuality)
 class VideoQualityAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "video",
         "resolution",
         "file_path",
