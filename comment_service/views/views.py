@@ -1,72 +1,114 @@
 import json
-from django.urls import reverse
-from django.views.generic import ListView, CreateView
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.generic import View
 from comment_app.models import Comment
 from comment_app.forms import CommentForm
-from comment_app.kafka_producer import KafkaProducer
 from comment_app.kafka_consumer import get_video_data
-from django.contrib.auth.mixins import LoginRequiredMixin
+from comment_app.kafka_producer import send_event
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.core.cache import cache
 
 
-class CommentViewList(ListView):
-    model = Comment
-    template_name = "comment_app/comment_list.html"
-    context_object_name = "comments"
+class CommentListAndPostView(View):
+    template_name = "comment_app/comment_list_and_post.html"
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get(self, request, *args, **kwargs):
+        # Получаем список комментариев
+        comments = Comment.objects.filter(
+            parent__isnull=True
+        )  # Только корневые комментарии
         comments_with_details = []
 
-        for comment in context["comments"]:  # Используем загруженные комментарии
-            # Получение данных о пользователе
-            user_data = {
-                "id": comment.user.id,
-                "username": comment.user.username,
-                "email": comment.user.email,
-            }
-
-            # Получение данных о видео через Kafka
-            video_data = get_video_data(comment.video_id) or {}
+        for comment in comments:
+            # Используем кэширование для данных видео
+            video_data = self.get_video_data_cached(comment.video_id)
 
             comments_with_details.append(
                 {
                     "comment": comment,
-                    "user": user_data,
                     "video": video_data,
+                    "replies": comment.replies.all(),  # Получаем ответы на комментарий
                 }
             )
 
-        context["comments_with_details"] = comments_with_details
-        context["comment"] = "Список комментариев"
-        return context
-
-
-class CommentPostView(LoginRequiredMixin, CreateView):
-    model = Comment
-    form_class = CommentForm
-    template_name = "comment_app/comment_post.html"
-
-    def form_valid(self, form):
-        # Устанавливаем текущего пользователя как автора комментария
-        form.instance.user = self.request.user
-        # form.instance.video_id = self.kwargs.get("video_id")
-        response = super().form_valid(form)
-
-        # Отправка уведомления в Kafka
-        producer = KafkaProducer()
-        topic = "notification-topic"
-        message = {
-            "comment_id": self.object.id,
-            "user_id": self.request.user.id,
-            "comment_text": self.object.text,
-            "created_at": self.object.created_at.isoformat(),
+        # Рендерим шаблон с комментариями и формой
+        context = {
+            "comments_with_details": comments_with_details,
+            "comment_form": CommentForm(),
+            "comment_list_title": "Список комментариев",
         }
-        try:
-            producer.send_message(topic, json.dumps(message))
-        except Exception as e:
-            print(f"Error sending message to Kafka: {e}")
+        print(
+            f"Комментарии успешно загружены: {len(comments_with_details)} комментариев"
+        )
+        return render(request, self.template_name, context)
 
-        return response
+    def post(self, request, *args, **kwargs):
+        # Обрабатываем создание нового комментария
+        form = CommentForm(request.POST)
 
-    def get_success_url(self):
-        return reverse("comment_list")
+        if form.is_valid():
+            form.instance.user = request.user
+            form.instance.video_id = request.POST.get("video_id")  # Указываем video_id
+
+            # Проверяем, является ли комментарий ответом
+            parent_id = request.POST.get("parent_id")
+            if parent_id:
+                parent_comment = Comment.objects.get(id=parent_id)
+                form.instance.parent = parent_comment
+
+            # Сохраняем комментарий
+            new_comment = form.save()
+
+            # Логируем успешное сохранение комментария
+            print(
+                f"Комментарий добавлен пользователем {request.user.username}: {new_comment.text}"
+            )
+
+            # Отправляем событие в Kafka после успешного создания комментария
+            event_data = {
+                "user_id": request.user.id,
+                "text": new_comment.text,
+                "timestamp": new_comment.created_at.isoformat(),
+            }
+            try:
+                send_event(
+                    topic="comment-topic",
+                    key=str(new_comment.id),
+                    value=json.dumps(event_data),
+                )
+                print(
+                    f"Событие успешно отправлено в Kafka для комментария ID {new_comment.id}"
+                )
+            except Exception as e:
+                print(f"Ошибка при отправке события в Kafka: {str(e)}")
+
+            # Возвращаем успешный ответ
+            return JsonResponse(
+                {"success": True, "message": "Комментарий добавлен!"}, status=200
+            )
+
+        print(f"Ошибка при добавлении комментария: {form.errors}")
+        return JsonResponse({"success": False, "errors": form.errors}, status=400)
+
+    def get_video_data_cached(self, video_id):
+        # Проверка наличия кэшированных данных о видео
+        cached_data = cache.get(f"video_data_{video_id}")
+        if cached_data is None:
+            try:
+                cached_data = get_video_data(video_id) or {}
+                cache.set(
+                    f"video_data_{video_id}", cached_data, timeout=3600
+                )  # Кэшируем на 1 час
+                print(f"Данные о видео для video_id {video_id} получены и кэшированы.")
+            except Exception as e:
+                print(
+                    f"Ошибка при получении данных о видео для video_id {video_id}: {e}"
+                )
+                cached_data = {}
+        else:
+            print(f"Данные о видео для video_id {video_id} загружены из кэша.")
+        return cached_data

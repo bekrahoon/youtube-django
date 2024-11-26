@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комментарии</title>
+</head>
+<body>
+    <h1>{{ comment_list_title }}</h1>
+
+    <div id="comment-list">
+        {% for item in comments_with_details %}
+            <div class="comment">
+                <p><strong>{{ item.comment.user.username }}</strong>: {{ item.comment.text }}</p>
+                <p><em>Видео: 
+                    {% if item.video.title %}
+                        {{ item.video.title }}
+                    {% else %}
+                        видео нет
+                    {% endif %}</em></p>
+
+                <!-- Выводим ответы на комментарий -->
+                <div class="replies">
+                    {% for reply in item.comment.replies.all %}
+                        <div class="reply">
+                            <p><strong>{{ reply.user.username }}</strong>: {{ reply.text }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Кнопка для ответа на комментарий -->
+                <button class="reply-button" data-parent-id="{{ item.comment.id }}">Ответить</button>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h2>Добавить комментарий</h2>
+    <form id="comment-form" method="post" action="{% url 'comment_list_and_post' %}">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <input type="hidden" name="parent_id" id="parent-id"> <!-- Скрытое поле для родительского комментария -->
+        <button type="submit">Добавить комментарий</button>
+    </form>
+
+    <script>
+        // Обработчик нажатия на кнопку "Ответить"
+        document.querySelectorAll('.reply-button').forEach(button => {
+            button.addEventListener('click', function() {
+                // Устанавливаем родительский комментарий в скрытое поле
+                const parentId = this.getAttribute('data-parent-id');
+                document.getElementById('parent-id').value = parentId;
+
+                // Местоположение формы для ответа
+                document.getElementById('comment-form').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Обработчик отправки формы комментариев
+        document.getElementById('comment-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+
+            fetch("{% url 'comment_list_and_post' %}", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();  // Перезагружаем страницу после добавления комментария
+                } else {
+                    alert("Ошибка при добавлении комментария: " + data.errors);
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
+        });
+    </script>
+</body>
+</html>

@@ -1,13 +1,33 @@
 from confluent_kafka import Producer
+import logging
+
+# Настройки Kafka
+KAFKA_CONFIG = {
+    "bootstrap.servers": "kafka:9092",  # Укажите адрес вашего Kafka-брокера
+    "client.id": "comment-topic",
+}
 
 
-class KafkaProducer:
-    def __init__(self, bootstrap_servers="kafka:9092"):
-        self.producer = Producer({"bootstrap.servers": bootstrap_servers})
+def get_kafka_producer():
+    """Создает и возвращает Kafka Producer."""
+    return Producer(KAFKA_CONFIG)
 
-    def send_message(self, topic, message):
-        try:
-            self.producer.produce(topic, message.encode("utf-8"))
-            self.producer.flush()
-        except Exception as e:
-            print(f"Error sending message to kafka {e}")
+
+def send_event(topic, key, value):
+    """
+    Отправляет событие в Kafka.
+    :param topic: Топик Kafka
+    :param key: Ключ события
+    :param value: Значение события
+    """
+    producer = get_kafka_producer()
+    try:
+        producer.produce(
+            topic,
+            key=key,
+            value=value,
+        )
+        producer.flush()  # Ждем завершения отправки
+        logging.info(f"Событие отправлено: {key} -> {value}")
+    except Exception as e:
+        logging.error(f"Ошибка отправки события в Kafka: {str(e)}")

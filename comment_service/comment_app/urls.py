@@ -1,8 +1,6 @@
 from django.urls import path
-from views.views import CommentPostView, CommentViewList
-
+from views.views import CommentListAndPostView
 
 urlpatterns = [
-    path("", CommentViewList.as_view(), name="comment_list"),
-    path("post/", CommentPostView.as_view(), name="comment_post"),
+    path("", CommentListAndPostView.as_view(), name="comment_list_and_post"),
 ]

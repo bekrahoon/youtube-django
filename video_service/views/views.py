@@ -127,7 +127,6 @@ class VideoUpdateView(UpdateView):
         form.instance.user = self.request.user
         response = super().form_valid(form)
 
-        # Отправляем событие в Kafka после успешного создания видео
         event_data = {
             "user_id": self.request.user.id,
             "video_id": self.object.id,

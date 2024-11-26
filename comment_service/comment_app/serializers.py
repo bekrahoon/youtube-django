@@ -8,7 +8,7 @@ class CommentSerializer(ModelSerializer):
         fields = [
             "id",
             "user",
-            "video",
+            "video_id",
             "text",
             "created_at",
         ]

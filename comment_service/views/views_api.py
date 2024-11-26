@@ -14,7 +14,9 @@ class CommentViewSet(ModelViewSet):
         # Динамическая логика для разрешений
         if self.action in ["update", "destroy"]:
             return [IsAuthenticated(), IsOwner()]
-        elif self.action in ["create"]:
+        elif self.action == "create":
+            return [IsAuthenticated()]
+        elif self.action == "post":
             return [IsAuthenticated()]
         # Для других действий используем базовое разрешение AllowAny
         return [AllowAny()]
