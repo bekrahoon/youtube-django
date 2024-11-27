@@ -38,9 +38,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "notification_app",
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -71,8 +73,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "notification_service.wsgi.application"
+# WSGI_APPLICATION = "notification_service.wsgi.application"
+ASGI_APPLICATION = "notification_service.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],  # Настройка Redis
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

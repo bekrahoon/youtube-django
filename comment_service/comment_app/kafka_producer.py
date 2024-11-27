@@ -1,9 +1,8 @@
 from confluent_kafka import Producer
-import logging
 
 # Настройки Kafka
 KAFKA_CONFIG = {
-    "bootstrap.servers": "kafka:9092",  # Укажите адрес вашего Kafka-брокера
+    "bootstrap.servers": "kafka:9092",
     "client.id": "comment-topic",
 }
 
@@ -14,6 +13,7 @@ def get_kafka_producer():
 
 
 def send_event(topic, key, value):
+    print(f"Отправка в Kafka - Топик: {topic}, Ключ: {key}, Значение: {value}")
     """
     Отправляет событие в Kafka.
     :param topic: Топик Kafka
@@ -28,6 +28,6 @@ def send_event(topic, key, value):
             value=value,
         )
         producer.flush()  # Ждем завершения отправки
-        logging.info(f"Событие отправлено: {key} -> {value}")
+        print(f"Событие отправлено: {key} -> {value}")
     except Exception as e:
-        logging.error(f"Ошибка отправки события в Kafka: {str(e)}")
+        print(f"Ошибка отправки события в Kafka: {str(e)}")

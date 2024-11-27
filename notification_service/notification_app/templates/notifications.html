@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Уведомления</title>
+</head>
+<body>
+    <h1>Уведомления</h1>
+    <ul>
+        {% for notification in notifications %}
+            <li>
+                <p>{{ notification.message }}</p>
+                <p><small>{{ notification.created_at }}</small></p>
+                <p>Status: {{ notification.status }}</p>
+                {% if notification.status == 'unread' %}
+                    <a href="{% url 'mark_as_read' notification.id %}">Mark as read</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+<script>
+    const socket = new WebSocket(`ws://localhost:8000/ws/notifications/${user_id}/`);
+
+    socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        if (data.type === "notifications") {
+            // Обработка уведомлений
+            console.log("Получены уведомления:", data.notifications);
+        }
+
+        if (data.type === "notification_status_update") {
+            // Обработка обновления статуса уведомления
+            console.log("Статус уведомления обновлён:", data.notification_id, data.status);
+        }
+    };
+
+    socket.onopen = function(e) {
+        console.log("WebSocket соединение установлено");
+    };
+
+    socket.onclose = function(e) {
+        console.log("WebSocket соединение закрыто");
+    };
+
+    function getNotifications() {
+        socket.send(JSON.stringify({ "action": "get_notifications" }));
+    }
+
+    function markNotificationAsRead(notification_id) {
+        socket.send(JSON.stringify({ 
+            "action": "mark_read", 
+            "notification_id": notification_id 
+        }));
+    }
+</script>
+

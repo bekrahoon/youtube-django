@@ -41,9 +41,7 @@ class CommentListAndPostView(View):
             "comment_form": CommentForm(),
             "comment_list_title": "Список комментариев",
         }
-        print(
-            f"Комментарии успешно загружены: {len(comments_with_details)} комментариев"
-        )
+
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -63,34 +61,39 @@ class CommentListAndPostView(View):
             # Сохраняем комментарий
             new_comment = form.save()
 
-            # Логируем успешное сохранение комментария
-            print(
-                f"Комментарий добавлен пользователем {request.user.username}: {new_comment.text}"
-            )
+            # Получаем данные о видео с кэшированием
+            video_data = self.get_video_data_cached(new_comment.video_id)
+
+            # Если video_data не получены, можно решить, как поступить:
+            if not video_data:
+                print(f"Данные о видео для video_id {new_comment.video_id} не найдены.")
 
             # Отправляем событие в Kafka после успешного создания комментария
             event_data = {
                 "user_id": request.user.id,
                 "text": new_comment.text,
                 "timestamp": new_comment.created_at.isoformat(),
+                "video_data": video_data,  # Добавляем данные о видео, если они есть
             }
+
             try:
                 send_event(
                     topic="comment-topic",
                     key=str(new_comment.id),
                     value=json.dumps(event_data),
                 )
-                print(
-                    f"Событие успешно отправлено в Kafka для комментария ID {new_comment.id}"
-                )
+
             except Exception as e:
                 print(f"Ошибка при отправке события в Kafka: {str(e)}")
+                print("Проверьте подключение к Kafka и конфигурацию.")
 
             # Возвращаем успешный ответ
             return JsonResponse(
                 {"success": True, "message": "Комментарий добавлен!"}, status=200
             )
 
+        else:
+            print(f"Ошибка при валидации формы: {form.errors}")
         print(f"Ошибка при добавлении комментария: {form.errors}")
         return JsonResponse({"success": False, "errors": form.errors}, status=400)
 

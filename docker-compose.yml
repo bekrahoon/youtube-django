@@ -58,6 +58,7 @@ services:
     depends_on:
       - postgres_notification_service
       - kafka
+      - redis
 
   recommendation_service:
     build:
