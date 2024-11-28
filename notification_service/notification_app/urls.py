@@ -1,5 +1,5 @@
 from django.urls import path
-from ..views.views import NotificationsView, MarkAsReadView
+from views.views import NotificationsView, MarkAsReadView
 
 urlpatterns = [
     path("notifications/", NotificationsView.as_view(), name="notifications"),
