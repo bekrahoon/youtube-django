@@ -1,9 +1,8 @@
-from django.urls import reverse
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, UpdateView
-
+from django.urls import reverse
 from profile_app.forms import UserProfileForm
 from profile_app.models import UserProfile
-from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class UserProfileDetailView(DetailView):

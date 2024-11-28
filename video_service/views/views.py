@@ -1,9 +1,7 @@
-import json
-import mimetypes
-from django.db.models import Q
-from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.http import FileResponse, JsonResponse
 from django.urls import reverse
+from django.db.models import Q
 from django.views import View
 from django.views.generic import (
     DetailView,
@@ -12,12 +10,14 @@ from django.views.generic import (
     UpdateView,
     DeleteView,
 )
-from video_app.models import Video
 from video_app.forms import VideoFilterForm, VideoForm
-from video_app.tasks import proccess_video
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from video_app.kafka_producer import send_event  # Импортируем продюсер Kafka
+from video_app.tasks import proccess_video
+from video_app.models import Video
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+import mimetypes
+import json
 
 
 class VideoListView(ListView):
@@ -92,6 +92,16 @@ class VideoCreateView(CreateView):
         except Exception as e:
             print(f"Ошибка при отправке события в Kafka: {str(e)}")
 
+        try:
+            send_event(
+                topic="notification-topic",
+                key=str(self.object.id),
+                value=json.dumps(event_data),
+            )
+            print("Событие успешно отправлено в Kafka")
+        except Exception as e:
+            print(f"Ошибка при отправке события в Kafka: {str(e)}")
+
         return response
 
     def get_success_url(self):
@@ -136,6 +146,16 @@ class VideoUpdateView(UpdateView):
         try:
             send_event(
                 topic="video-topic",
+                key=str(self.object.id),
+                value=json.dumps(event_data),
+            )
+            print("Событие успешно отправлено в Kafka")
+        except Exception as e:
+            print(f"Ошибка при отправке события в Kafka: {str(e)}")
+
+        try:
+            send_event(
+                topic="notifivation-topic",
                 key=str(self.object.id),
                 value=json.dumps(event_data),
             )

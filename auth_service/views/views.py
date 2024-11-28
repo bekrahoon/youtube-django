@@ -5,37 +5,6 @@ from django.views import View
 from rest_framework_simplejwt.tokens import RefreshToken
 from auth_app.forms import CustomRegisterForm, CustomLoginForm
 from profile_app.models import UserProfile
-from confluent_kafka import Producer
-import json
-
-# Настройка Kafka
-kafka_conf = {
-    "bootstrap.servers": "kafka:9092",
-    "client.id": "auth-topic",
-}
-
-producer = Producer(kafka_conf)
-
-
-def delivery_callback(err, msg):
-    if err is not None:
-        print(f"ОШИБКА: {err}")
-    else:
-        print(f"Сообщение {msg.topic()}[{msg.partition()}] доставлено успешно.")
-
-
-# Отправка сообщения в Kafka
-def send_to_comment_service(topic, message):
-    try:
-        producer.produce(
-            topic,
-            key="user_event",
-            value=json.dumps(message),
-            callback=delivery_callback,
-        )
-        producer.flush()
-    except Exception as e:
-        print(f"Ошибка при отправке сообщения в Kafka: {e}")
 
 
 class RegisterView(View):
@@ -57,15 +26,6 @@ class RegisterView(View):
             refresh = RefreshToken.for_user(user)
             access_token = refresh.access_token
             messages.success(request, "Registration successful")
-
-            # Отправляем информацию о новом пользователе в comment_service через Kafka
-            user_data = {
-                "user_id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "action": "register",
-            }
-            send_to_comment_service("comment-topic", user_data)
 
             # Перенаправляем на страницу профиля пользователя
             return redirect("profile_app:profile_detail", pk=user.id)
@@ -89,15 +49,6 @@ class LoginView(View):
             refresh = RefreshToken.for_user(user)
             access_token = refresh.access_token
             messages.success(request, "Login successful")
-
-            # Отправляем информацию о пользователе в comment_service через Kafka
-            user_data = {
-                "user_id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "action": "login",
-            }
-            send_to_comment_service("comment-topic", user_data)
 
             # Перенаправляем на страницу профиля пользователя
             return redirect("profile_app:profile_detail", pk=user.id)

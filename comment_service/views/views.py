@@ -1,14 +1,14 @@
-import json
-from django.shortcuts import render
-from django.http import JsonResponse
 from django.views.generic import View
-from comment_app.models import Comment
-from comment_app.forms import CommentForm
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.core.cache import cache
 from comment_app.kafka_consumer import get_video_data
 from comment_app.kafka_producer import send_event
-from rest_framework.permissions import IsAuthenticated
+from comment_app.forms import CommentForm
+from comment_app.models import Comment
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.core.cache import cache
+from rest_framework.permissions import IsAuthenticated
+import json
 
 
 class CommentListAndPostView(View):
@@ -85,7 +85,16 @@ class CommentListAndPostView(View):
 
             except Exception as e:
                 print(f"Ошибка при отправке события в Kafka: {str(e)}")
-                print("Проверьте подключение к Kafka и конфигурацию.")
+
+            try:
+                send_event(
+                    topic="notification-topic",
+                    key=str(new_comment.id),
+                    value=json.dumps(event_data),
+                )
+
+            except Exception as e:
+                print(f"Ошибка при отправке события в Kafka: {str(e)}")
 
             # Возвращаем успешный ответ
             return JsonResponse(

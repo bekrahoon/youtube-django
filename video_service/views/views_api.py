@@ -1,10 +1,10 @@
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
-from video_app.models import Video
 from video_app.serializers import VideoSerializer
-from confluent_kafka import Producer
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from video_app.permissions import IsOwner
+from video_app.models import Video
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from confluent_kafka import Producer
 
 kafka_config = {
     "bootstrap.servers": "kafka:9092",

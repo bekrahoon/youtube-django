@@ -1,10 +1,10 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from profile_app.models import UserProfile
+from rest_framework.response import Response
+from rest_framework import viewsets, status
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from profile_app.serializers import UserProfileSerializer
 from profile_app.permissions import IsOwnerOrReadOnly
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from profile_app.models import UserProfile
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):

@@ -142,7 +142,6 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_DEFAULT_REPLICATION_FACTOR=1
       - KAFKA_CREATE_TOPICS=auth-topic:1:1,video-topic:1:1,comment-topic:1:1,notification-topic:1:1,recommendation-topic:1:1
-
     depends_on:
       - zookeeper
     networks:
@@ -172,10 +171,7 @@ networks:
 
 volumes:
   auth_service_db_data:
-  user_profile_service_db_data:
   video_service_db_data:
   comment_service_db_data:
   notification_service_db_data:
   recommendation_service_db_data:
-
-
