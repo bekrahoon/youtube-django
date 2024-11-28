@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-import os
-from pathlib import Path
+from firebase_admin import credentials
 from decouple import config
+from pathlib import Path
+import firebase_admin
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -153,3 +155,10 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
+
+# Указываем путь к JSON-файлу, путь берётся из настроек
+FIREBASE_SERVICE_ACCOUNT_KEY = config("FIREBASE_SERVICE_ACCOUNT_KEY")
+
+# Инициализируем Firebase Admin SDK
+cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_KEY)
+firebase_admin.initialize_app(cred)

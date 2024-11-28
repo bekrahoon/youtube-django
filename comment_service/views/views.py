@@ -78,17 +78,7 @@ class CommentListAndPostView(View):
 
             try:
                 send_event(
-                    topic="comment-topic",
-                    key=str(new_comment.id),
-                    value=json.dumps(event_data),
-                )
-
-            except Exception as e:
-                print(f"Ошибка при отправке события в Kafka: {str(e)}")
-
-            try:
-                send_event(
-                    topic="notification-topic",
+                    topic=["comment-topic", "notification-topic"],
                     key=str(new_comment.id),
                     value=json.dumps(event_data),
                 )

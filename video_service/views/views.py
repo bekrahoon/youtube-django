@@ -84,17 +84,7 @@ class VideoCreateView(CreateView):
         }
         try:
             send_event(
-                topic="video-topic",
-                key=str(self.object.id),
-                value=json.dumps(event_data),
-            )
-            print("Событие успешно отправлено в Kafka")
-        except Exception as e:
-            print(f"Ошибка при отправке события в Kafka: {str(e)}")
-
-        try:
-            send_event(
-                topic="notification-topic",
+                topic=["video-topic", "notification-topic"],
                 key=str(self.object.id),
                 value=json.dumps(event_data),
             )
@@ -145,17 +135,7 @@ class VideoUpdateView(UpdateView):
         }
         try:
             send_event(
-                topic="video-topic",
-                key=str(self.object.id),
-                value=json.dumps(event_data),
-            )
-            print("Событие успешно отправлено в Kafka")
-        except Exception as e:
-            print(f"Ошибка при отправке события в Kafka: {str(e)}")
-
-        try:
-            send_event(
-                topic="notifivation-topic",
+                topic=["video-topic", "notification-topic"],
                 key=str(self.object.id),
                 value=json.dumps(event_data),
             )
