@@ -17,7 +17,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def perform_create(self, serializer):
@@ -26,7 +26,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Получение только профиля текущего пользователя
-        return UserProfile.objects.filter(user=self.request.user)
+        return UserProfile.objects.all()
 
     def update(self, request, *args, **kwargs):
         """

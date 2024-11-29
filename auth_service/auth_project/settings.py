@@ -45,12 +45,13 @@ INSTALLED_APPS = [
     # websocket
     "channels",
     "django.contrib.staticfiles",
+    # DRF
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     # my apps
     "auth_app",
     "profile_app",
-    # DRF
-    "rest_framework",
-    "rest_framework_simplejwt.token_blacklist",
     # "allauth",
     "django.contrib.sites",
     "allauth",
@@ -73,6 +74,26 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "auth_project.urls"
+
+CORS_URLS_REJEX = r"^/api/.*"
+CORS_ALLOWED_ORIGINS = []
+
+CORS_ALLOW_CREDENTIALS = True
+
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:8000",  # auth_service
+        "http://localhost:8001",  # video_service
+        "http://localhost:8002",  # comment_service
+        "http://localhost:8003",  # notification_service
+        "http://localhost:8004",  # recommendation_service
+    ]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",  # Your nginx server's address
+]
+CSRF_COOKIE_SECURE = False  # Only set to True if using HTTPS
+CSRF_COOKIE_HTTPONLY = True
+
 
 TEMPLATES = [
     {
@@ -167,31 +188,14 @@ REST_FRAMEWORK = {
     ],
 }
 
-
-AUTH_USER_MODEL = "auth_app.CustomUser"
-
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
+    "SIGNING_KEY": config("SIGNING_KEY"),
     "AUTH_HEADER_TYPES": ("Bearer",),
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
-    "JTI_CLAIM": "jti",
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -227,26 +231,4 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",  # auth_service
-    "http://localhost:8001",  # user_profile_service
-    "http://localhost:8002",  # video_service
-    "http://localhost:8003",  # video_service
-    "http://localhost:8004",  # video_service
-]
-CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:8001",
-    "http://localhost:8002",
-    "http://localhost:8003",
-    "http://localhost:8004",
-]
-
-CORS_ALLOW_HEADERS = [
-    "authorization",  # для передачи токенов аутентификации
-    "content-type",
-    "accept",
-    "x-requested-with",
-]
+AUTH_USER_MODEL = "auth_app.CustomUser"

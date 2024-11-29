@@ -15,22 +15,22 @@ class RegisterView(View):
     def post(self, request):
         form = CustomRegisterForm(request.POST)
         if form.is_valid():
-            # Создаем пользователя
             user = form.save()
             UserProfile.objects.create(user=user)
 
-            # Авторизуем пользователя после регистрации
+            # Указываем backend для логина через строку пути
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
-            # Генерация JWT токена
             refresh = RefreshToken.for_user(user)
-            access_token = refresh.access_token
+            access_token = str(refresh.access_token)
+
+            # Устанавливаем токен в куку
+            response = redirect("profile_app:profile_detail", pk=user.id)
+            response.set_cookie("access_token", access_token, httponly=False)
+
             messages.success(request, "Registration successful")
+            return response
 
-            # Перенаправляем на страницу профиля пользователя
-            return redirect("profile_app:profile_detail", pk=user.id)
-
-        # Если форма не прошла валидацию, возвращаем обратно с ошибками
         return render(request, "auth_app/register.html", {"form": form})
 
 
@@ -43,15 +43,19 @@ class LoginView(View):
         form = CustomLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
 
-            # Генерация JWT токена
+            # Указываем backend для логина через строку пути
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
             refresh = RefreshToken.for_user(user)
-            access_token = refresh.access_token
-            messages.success(request, "Login successful")
+            access_token = str(refresh.access_token)
 
-            # Перенаправляем на страницу профиля пользователя
-            return redirect("profile_app:profile_detail", pk=user.id)
+            # Устанавливаем токен в куку
+            response = redirect("profile_app:profile_detail", pk=user.id)
+            response.set_cookie("access_token", access_token, httponly=False)
+
+            messages.success(request, "Login successful")
+            return response
 
         messages.error(request, "Login failed, please try again")
         return render(request, "auth_app/login.html", {"form": form})

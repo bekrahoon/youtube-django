@@ -47,4 +47,42 @@
         {% endif %}
     </div>
 </div>
+<script>
+{% comment %} 
+// Пример получения токена из куки
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+const token = getCookie('access_token');  // Получаем токен из куки
+console.log(token);  // Проверяем, установлен ли токен
+
+const user = {
+    id: {{ user.id }},
+};
+
+fetch(`http://localhost:8000/profile/${user.id}/`, {
+    method: 'GET',
+    headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+    }
+})
+.then(response => {
+    console.log('Response Headers:', [...response.headers.entries()]);  // Проверяем, что заголовок установлен
+    if (response.status === 401) {
+        alert('Unauthorized. Please log in again.');
+        window.location.href = '/auth/login';
+    }
+    return response.json();
+})
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error)); {% endcomment %}
+
+
+</script>
+
 {% endblock %}

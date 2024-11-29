@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
 from views.profile_api import UserProfileViewSet
-from views.views_api import LoginView, RegisterView, UserDetailView
+from views.views_api import LoginView, RegisterView
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -22,7 +22,6 @@ urlpatterns = [
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/login/", LoginView.as_view(), name="login"),
-    path("user-detail/", UserDetailView.as_view(), name="user-detail"),
     # Включаем маршруты из DefaultRouter для профилей пользователей
     path("", include(router.urls)),
 ]

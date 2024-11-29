@@ -3,12 +3,14 @@ from comment_app.permission import IsOwner
 from comment_app.models import Comment
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ModelViewSet
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class CommentViewSet(ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [AllowAny]  # Устанавливаем базовое разрешение
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
         # Динамическая логика для разрешений

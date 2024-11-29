@@ -14,6 +14,22 @@ services:
       - kafka
       - redis
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+    depends_on:
+      - auth_service
+      - video_service
+      - comment_service
+      - notification_service
+      - recommendation_service
+
   video_service:
     build:
       context: ./video_service
@@ -29,6 +45,7 @@ services:
       - postgres_video_service
       - kafka
       - redis
+      - auth_service
 
   comment_service:
     build:
@@ -44,6 +61,7 @@ services:
       - postgres_comment_service
       - kafka
       - redis
+      - auth_service
 
   notification_service:
     build:
@@ -59,6 +77,7 @@ services:
       - postgres_notification_service
       - kafka
       - redis
+      - auth_service
 
   recommendation_service:
     build:
@@ -73,6 +92,7 @@ services:
     depends_on:
       - postgres_recommendation_service
       - kafka
+      - auth_service
 
   postgres_auth_service:
     image: postgres:latest

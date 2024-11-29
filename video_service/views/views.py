@@ -15,7 +15,6 @@ from video_app.kafka_producer import send_event  # Импортируем про
 from video_app.tasks import proccess_video
 from video_app.models import Video
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
 import mimetypes
 import json
 
@@ -68,7 +67,6 @@ class VideoCreateView(CreateView):
     form_class = VideoForm
     template_name = "video_app/video_form.html"
 
-    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def form_valid(self, form):
@@ -105,7 +103,7 @@ class VideoUpdateView(UpdateView):
     model = Video
     template_name = "video_app/video_form.html"
     form_class = VideoForm
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def get_success_url(self):
         return reverse("video_list")

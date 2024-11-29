@@ -13,7 +13,6 @@ import json
 
 class CommentListAndPostView(View):
     template_name = "comment_app/comment_list_and_post.html"
-    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def get(self, request, *args, **kwargs):

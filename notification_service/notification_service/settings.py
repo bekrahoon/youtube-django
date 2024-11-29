@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import timedelta
 from firebase_admin import credentials
 from decouple import config
 from pathlib import Path
@@ -43,12 +44,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "channels",
     "rest_framework",
-    "rest_framework_simplejwt.token_blacklist",
+    "rest_framework_simplejwt",
     "notification_app",
     "api",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -59,6 +61,18 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "notification_service.urls"
+
+CORS_URLS_REJEX = r"^/api/.*"
+CORS_ALLOWED_ORIGINS = []
+
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:8000",  # auth_service
+        "http://localhost:8001",  # video_service
+        "http://localhost:8002",  # comment_service
+        "http://localhost:8003",  # notification_service
+        "http://localhost:8004",  # recommendation_service
+    ]
 
 TEMPLATES = [
     {
@@ -142,11 +156,7 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
-}
+
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -162,3 +172,18 @@ FIREBASE_SERVICE_ACCOUNT_KEY = config("FIREBASE_SERVICE_ACCOUNT_KEY")
 # Инициализируем Firebase Admin SDK
 cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_KEY)
 firebase_admin.initialize_app(cred)
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": config("SIGNING_KEY"),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
