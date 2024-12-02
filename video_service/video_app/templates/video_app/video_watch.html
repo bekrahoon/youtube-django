@@ -32,10 +32,8 @@
                     <button id="transcode-button">Start Transcoding</button>
                     <div class="video-details">
                         <p class="video-description">{{ object.description }}</p>
-                        {% if object.user == user %}
                             <button class="btn btn-change"><a href="{% url 'video_update' video.pk %}">Change</a></button>
                             <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
-                        {% endif %}
                     </div>
                     <div>
                         

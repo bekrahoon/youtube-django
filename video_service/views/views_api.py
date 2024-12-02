@@ -1,10 +1,11 @@
+from django.forms import ValidationError
 from video_app.serializers import VideoSerializer
 from video_app.permissions import IsOwner
 from video_app.models import Video
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from confluent_kafka import Producer
+from .views_get_user_api import get_user_data_from_auth_service
 
 kafka_config = {
     "bootstrap.servers": "kafka:9092",
@@ -25,11 +26,16 @@ def send_kafka_message(topic, key, value):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    authentication_classes = JWTAuthentication
+    authentication_classes = []
+    permission_classes = []
 
     def perform_create(self, serializer):
-        print(f"Пользователь из запроса: {self.request.user}")
-        video = serializer.save(user=self.request.user)
+        user_data = get_user_data_from_auth_service(
+            self.request.headers.get("Authorization")
+        )
+        if not user_data:
+            raise ValidationError("Неверные данные пользователя.")
+        video = serializer.save(user_id=user_data["id"])
         # Отправка сообщения в Kafka при создании видео
         send_kafka_message(
             topic="video-topic",

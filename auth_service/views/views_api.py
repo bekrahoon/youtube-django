@@ -5,6 +5,10 @@ from django.views import View
 from rest_framework_simplejwt.tokens import RefreshToken
 from auth_app.forms import CustomRegisterForm, CustomLoginForm
 from profile_app.models import UserProfile
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class RegisterView(View):
@@ -61,3 +65,18 @@ class LoginView(View):
 
         messages.error(request, "Login failed, please try again")
         return render(request, "auth_app/login.html", {"form": form})
+
+
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        user = request.user
+        return Response(
+            {
+                "id": str(user.id),
+                "username": user.username,
+                "email": user.email,
+            }
+        )

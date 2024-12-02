@@ -16,6 +16,14 @@ class VideoForm(forms.ModelForm):
             "duration",
         )
 
+    def save(self, *args, **kwargs):
+        user = kwargs.pop("user", None)  # Извлекаем пользователя, если он передан
+        instance = super().save(*args, **kwargs)
+        if user:
+            instance.user = user  # Устанавливаем пользователя на объект
+            instance.save()  # Сохраняем объект с пользователем
+        return instance
+
 
 class VideoFilterForm(forms.Form):
     query = forms.CharField(

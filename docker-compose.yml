@@ -6,29 +6,16 @@ services:
     ports:
       - "8000:8000"
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.10
     env_file:
       - ./auth_service/.env
+    volumes:
+      - ./auth_service:/app
     depends_on:
       - postgres_auth_service
       - kafka
       - redis
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - "8080:8080"
-    networks:
-      - backend
-    depends_on:
-      - auth_service
-      - video_service
-      - comment_service
-      - notification_service
-      - recommendation_service
 
   video_service:
     build:
@@ -37,7 +24,8 @@ services:
     ports:
       - "8001:8000"
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.11
     env_file:
       - ./video_service/.env
     command: sh -c "python manage.py runserver 0.0.0.0:8000 & celery -A video_service worker --loglevel=info"
@@ -54,7 +42,8 @@ services:
     ports:
       - "8002:8000"
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.12
     env_file:
       - ./comment_service/.env
     depends_on:
@@ -70,7 +59,8 @@ services:
     ports:
       - "8003:8000"
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.13
     env_file:
       - ./notification_service/.env
     depends_on:
@@ -86,7 +76,8 @@ services:
     ports:
       - "8004:8000"
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.14
     env_file:
       - ./recommendation_service/.env
     depends_on:
@@ -102,7 +93,8 @@ services:
     volumes:
       - auth_service_db_data:/var/lib/postgresql/data
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.15
 
   postgres_video_service:
     image: postgres:latest
@@ -112,7 +104,8 @@ services:
     volumes:
       - video_service_db_data:/var/lib/postgresql/data
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.16
 
   postgres_comment_service:
     image: postgres:latest
@@ -122,7 +115,8 @@ services:
     volumes:
       - comment_service_db_data:/var/lib/postgresql/data
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.17
 
   postgres_notification_service:
     image: postgres:latest
@@ -132,7 +126,8 @@ services:
     volumes:
       - notification_service_db_data:/var/lib/postgresql/data
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.18
 
   postgres_recommendation_service:
     image: postgres:latest
@@ -142,7 +137,8 @@ services:
     volumes:
       - recommendation_service_db_data:/var/lib/postgresql/data
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.19
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -165,7 +161,8 @@ services:
     depends_on:
       - zookeeper
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.20
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -175,7 +172,8 @@ services:
       - ZOOKEEPER_CLIENT_PORT=2181
       - ZOOKEEPER_TICK_TIME=2000
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.21
 
   redis:
     image: redis
@@ -183,11 +181,34 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - backend
+      backend:
+        ipv4_address: 192.168.1.22
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:8080"
+    networks:
+      backend:
+        ipv4_address: 192.168.1.23
+    depends_on:
+      - auth_service
+      - video_service
+      - comment_service
+      - notification_service
+      - recommendation_service
 
 networks:
   backend:
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.1.0/24
+          gateway: 192.168.1.1
 
 volumes:
   auth_service_db_data:

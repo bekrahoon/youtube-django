@@ -1,14 +1,11 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.template.defaulttags import comment
 
 User = get_user_model()
 
 
 class Video(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="videos"
-    )  # Связь с пользователем из auth_service
+    user = models.IntegerField()
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     category = models.CharField(

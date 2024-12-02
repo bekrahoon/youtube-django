@@ -72,7 +72,13 @@ if DEBUG:
         "http://localhost:8002",  # comment_service
         "http://localhost:8003",  # notification_service
         "http://localhost:8004",  # recommendation_service
+        "http://127.0.0.1:8080",  # добавьте ваш фронтенд
+        "http://localhost:8080",  # если у вас есть другой вариант URL
     ]
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8080",  # добавьте ваш фронтенд
+    "http://localhost:8080",  # если у вас есть другой вариант URL
+]
 
 TEMPLATES = [
     {
@@ -180,9 +186,10 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": config("SIGNING_KEY"),
     "AUTH_HEADER_TYPES": ("Bearer",),
