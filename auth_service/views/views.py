@@ -26,7 +26,7 @@ class RegisterView(View):
 
             # Устанавливаем токен в куку
             response = redirect("profile_app:profile_detail", pk=user.id)
-            response.set_cookie("access_token", access_token, httponly=False)
+            response.set_cookie("access_token", access_token, httponly=True)
 
             messages.success(request, "Registration successful")
             return response
@@ -52,7 +52,7 @@ class LoginView(View):
 
             # Устанавливаем токен в куку
             response = redirect("profile_app:profile_detail", pk=user.id)
-            response.set_cookie("access_token", access_token, httponly=False)
+            response.set_cookie("access_token", access_token, httponly=True)
 
             messages.success(request, "Login successful")
             return response

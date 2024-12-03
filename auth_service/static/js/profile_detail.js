@@ -17,7 +17,7 @@ function createWebSocket() {
         return null;
     }
 
-    const url = `ws://${window.location.host}/ws/subscribe/${userId}/${targetUserId}/`;
+    const url = `ws://http://127.0.0.1:8000//ws/subscribe/${userId}/${targetUserId}/`;
     console.log("WebSocket URL:", url);
 
     const chatSocket = new WebSocket(url);

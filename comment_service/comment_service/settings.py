@@ -61,7 +61,10 @@ MIDDLEWARE = [
 ROOT_URLCONF = "comment_service.urls"
 
 CORS_URLS_REJEX = r"^/api/.*"
-CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",
+]
+
 
 if DEBUG:
     CORS_ALLOWED_ORIGINS = [

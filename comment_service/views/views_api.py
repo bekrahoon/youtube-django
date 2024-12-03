@@ -9,7 +9,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 class CommentViewSet(ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):

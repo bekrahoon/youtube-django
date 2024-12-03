@@ -24,6 +24,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("user_id", models.IntegerField()),
                 ("video_id", models.IntegerField()),
                 ("text", models.TextField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -35,14 +36,6 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="replies",
                         to="comment_app.comment",
-                    ),
-                ),
-                (
-                    "user",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="comments",
-                        to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
