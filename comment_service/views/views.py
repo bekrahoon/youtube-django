@@ -40,7 +40,10 @@ class CommentListAndPostView(View):
             "comments_with_details": comments_with_details,
             "comment_form": CommentForm(),
             "comment_list_title": "Список комментариев",
-            "user_data": user_data,
+            "user_data": {
+                **user_data,  # Разворачиваем существующие данные
+                "id": int(user_data["id"]),  # Преобразуем id в int
+            },
         }
 
         return render(request, self.template_name, context)

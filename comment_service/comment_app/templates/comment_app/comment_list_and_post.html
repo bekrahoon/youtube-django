@@ -12,7 +12,7 @@
     <div id="comment-list">
         {% for item in comments_with_details %}
             <div class="comment" id="comment-{{ item.comment.id }}">
-                <p><strong>{{ item.comment.user.username }}</strong>: {{ item.comment.text }}</p>   
+                <p><strong>{{ item.comment.user_id }}</strong>: {{ item.comment.text }}</p>   
                 <p><em>Видео: 
                     {% if item.video.title %}
                         {{ item.video.title }}
@@ -34,7 +34,7 @@
                 <button class="reply-button" data-parent-id="{{ item.comment.id }}">Ответить</button>
     
                 <!-- Кнопки для редактирования и удаления комментария -->
-                {% if item.comment.user_id == item.user.id %}
+                {% if item.comment.user_id == user_data.id %}
                     <button class="edit-button" data-comment-id="{{ item.comment.id }}" data-current-text="{{ item.comment.text }}">Редактировать</button>
                     <button class="delete-button" data-comment-id="{{ item.comment.id }}">Удалить</button>
                 {% endif %}
@@ -52,7 +52,7 @@
         <button type="submit">Добавить комментарий</button>
     </form>
 
-    <script>
+<script>
         // Функция для извлечения токена из cookies
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -104,114 +104,9 @@
                 document.getElementById('comment-form').scrollIntoView({ behavior: 'smooth' });
             });
         });
-    
-        // Обработчик нажатия на кнопку "Редактировать"
-        document.querySelectorAll('.edit-button').forEach(button => {
-            button.addEventListener('click', function () {
-                const commentId = this.getAttribute('data-comment-id');
-                const currentText = this.getAttribute('data-current-text');
-                const newText = prompt("Редактировать комментарий:", currentText);
-    
-                if (newText && newText !== currentText) {
-                    updateComment(commentId, newText);
-                }
-            });
-        });
-    
-        // Обработчик нажатия на кнопку "Удалить"
-        document.querySelectorAll('.delete-button').forEach(button => {
-            button.addEventListener('click', function () {
-                const commentId = this.getAttribute('data-comment-id');
-    
-                if (confirm("Вы уверены, что хотите удалить комментарий?")) {
-                    deleteComment(commentId);
-                }
-            });
-        });
-    
-        // Функция для отправки ответа
-        async function sendReply(parentId, text) {
-            const token = getCookie("access_token");
-    
-            if (!token) {
-                alert("Необходимо авторизоваться.");
-                return;
-            }
-    
-            const response = await fetch(`http://127.0.0.1:8000/comments/`, {
-                method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ parent_id: parentId, text: text })
-            });
-    
-            if (response.ok) {
-                alert("Ответ успешно добавлен!");
-                location.reload();
-            } else {
-                alert("Ошибка при добавлении ответа.");
-            }
-        }
-    
-        // Функция для обновления комментария
-        async function updateComment(commentId, newText) {
-            const token = getCookie("access_token");
-    
-            if (!token) {
-                alert("Необходимо авторизоваться.");
-                return;
-            }
-    
-            const response = await fetch(`http://127.0.0.1:8000/comments/${commentId}/`, {
-                method: "PUT",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ text: newText })
-            });
-    
-            if (response.ok) {
-                alert("Комментарий обновлен!");
-                location.reload();
-            } else {
-                alert("Ошибка при обновлении комментария.");
-            }
-        }
-    
-        // Функция для удаления комментария
-        async function deleteComment(commentId) {
-            const token = getCookie("access_token");
-    
-            if (!token) {
-                alert("Необходимо авторизоваться.");
-                return;
-            }
-    
-            const response = await fetch(`http://127.0.0.1:8000/comments/${commentId}/`, {
-                method: "DELETE",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest',
-                }
-            });
-    
-            if (response.ok) {
-                alert("Комментарий удален!");
-                document.getElementById(`comment-${commentId}`).remove(); // Удаление комментария из DOM
-            } else {
-                alert("Ошибка при удалении комментария.");
-            }
-        }
-    
-        // Обработчик формы для отправки комментария
+
+                
+        // Перезагрузка страницы после успешной отправки формы
         document.getElementById('comment-form').addEventListener('submit', function (event) {
             event.preventDefault(); // Предотвращаем стандартную отправку формы
     
@@ -234,6 +129,7 @@
             })
             .then(data => {
                 if (data.success) {
+                    // Перезагружаем страницу
                     window.location.reload();
                 } else {
                     alert("Ошибка: " + JSON.stringify(data.errors));
@@ -244,8 +140,7 @@
                 alert("Ошибка при отправке комментария. Попробуйте ещё раз.");
             });
         });
-    </script>
-    
+</script>
 
     
 </body>
