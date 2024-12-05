@@ -1,11 +1,10 @@
+# kafka_consumer.py
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from .models import Notification
+from .models import DeviceToken, Notification
 from confluent_kafka import Consumer, KafkaException, KafkaError
 from firebase_admin import messaging
 import json
 
-User = get_user_model()
 
 # Конфигурация Kafka Consumer
 conf = {
@@ -49,34 +48,46 @@ def consume_messages():
             user_id = message_data.get("user_id")
             message_text = message_data.get("text")
 
-            try:
-                user = User.objects.get(id=user_id)
-                # Создание уведомления в базе данных
-                notification = Notification.objects.create(
-                    user=user,
-                    message=message_text,
-                    status="unread",
-                    created_at=timezone.now(),
+            if not user_id or not message_text:
+                print("Некорректные данные в сообщении.")
+                continue
+            else:
+                print(
+                    f"Создание уведомления для user_id={user_id}, текст={message_text}"
                 )
-                print(f"Уведомление создано: {notification}")
 
-                # Отправка push-уведомления через Firebase
-                if hasattr(
-                    user, "device_token"
-                ):  # Убедитесь, что у пользователя есть токен устройства
-                    send_firebase_notification(
-                        token=user.device_token,
-                        title="Новое уведомление",
-                        body=message_text,
-                    )
-                else:
-                    print(f"У пользователя {user_id} отсутствует токен устройства.")
-            except User.DoesNotExist:
-                print(f"Пользователь с ID {user_id} не найден.")
+            notification = Notification.objects.create(
+                user_id=user_id,
+                message=message_text,
+                starus="unread",
+                created_at=timezone.now(),
+            )
+            print(f"Уведомление создано в БД: {notification}")
+            # Отправка push-уведомления через Firebase
+            # Предположим, что у вас есть механизм для получения `device_token` по `user_id`.
+            device_token = get_device_token(user_id)
+            if device_token:
+                send_firebase_notification(
+                    token=device_token,
+                    title="Новое уведомление",
+                    body=message_text,
+                )
+            else:
+                print(f"У пользователя с ID {user_id} отсутствует токен устройства.")
     except KeyboardInterrupt:
         pass
     finally:
         consumer.close()
 
 
+def get_device_token(user_id):
+    # Возвращает токен устройства для пользователя с указанным user_id.
+    try:
+        return DeviceToken.objects.get(user_id=user_id).token
+    except DeviceToken.DoesNotExist:
+        return None
+
+
 consume_messages()
+from notification_app.models import Notification
+from django.utils import timezone

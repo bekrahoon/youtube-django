@@ -1,54 +1,51 @@
+# consumer.py
 import json
-import logging
+import requests
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
-from notification_app.models import Notification
-from notification_app.serializers import NotificationSerializer
-from django.contrib.auth import get_user_model  # Импорт кастомной модели пользователя
+from .models import Notification
+from .serializers import NotificationSerializer
 
-User = get_user_model()
-
-
-# Настроим логирование
-logger = logging.getLogger(__name__)
+from views.views_get_user_api import get_user_data_from_auth_service
 
 
 # Асинхронные операции с базой данных
 @sync_to_async
-def create_notification(user, message):
-    # Создаём уведомление в базе данных
-    return Notification.objects.create(user=user, message=message, status="unread")
+def create_notification(user_id, message):
+    return Notification.objects.create(
+        user_id=user_id, message=message, status="unread"
+    )
 
 
 @sync_to_async
-def get_notifications(user):
-    # Получаем уведомления для пользователя
-    return Notification.objects.filter(user=user)
+def get_notifications(user_id):
+    return Notification.objects.filter(user_id=user_id)
 
 
 @sync_to_async
 def update_notification_status(notification_id):
-    # Обновляем статус уведомления на "прочитано"
     notification = Notification.objects.get(id=notification_id)
     notification.status = "read"
     notification.save()
 
 
-@sync_to_async
-def get_user(user_id):
-    # Получаем пользователя
-    return User.objects.get(id=user_id)
-
-
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
-            # Получаем user_id из URL
-            user_id = self.scope["url_route"]["kwargs"]["user_id"]
-            self.user = await get_user(user_id)
+            # Получаем токен из заголовков запроса
+            token = self.scope["headers"].get("authorization", None)
+            if not token:
+                await self.close()  # Закрыть соединение, если нет токена
+                return
 
-            logger.info(f"User {self.user.id} connected to notifications.")
-            self.room_group_name = f"notifications_{self.user.id}"
+            # Получаем данные пользователя из auth_service
+            user_data = await sync_to_async(get_user_data_from_auth_service)(token)
+            if not user_data:
+                await self.close()  # Закрыть соединение, если данные не найдены
+                return
+
+            self.user_id = user_data["id"]
+            self.room_group_name = f"notifications_{self.user_id}"
 
             # Присоединяемся к группе
             await self.channel_layer.group_add(
@@ -57,8 +54,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
 
             await self.accept()
+
         except Exception as e:
-            logger.error(f"Error in connect: {str(e)}")
+            print(f"Error in connect: {str(e)}")
             await self.close()
 
     async def receive(self, text_data):
@@ -67,10 +65,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             text_data_json = json.loads(text_data)
             action = text_data_json["action"]
 
-            logger.info(f"Received action: {action} from user {self.user.id}")
-
             if action == "get_notifications":
-                notifications = await get_notifications(self.user)
+                notifications = await get_notifications(self.user_id)
                 notifications_data = NotificationSerializer(
                     notifications, many=True
                 ).data
@@ -96,7 +92,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     },
                 )
         except Exception as e:
-            logger.error(f"Error in receive: {str(e)}")
+            print(f"Error in receive: {str(e)}")
             await self.close()
 
     async def notification_status_update(self, event):
@@ -112,7 +108,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 )
             )
         except Exception as e:
-            logger.error(f"Error in notification_status_update: {str(e)}")
+            print(f"Error in notification_status_update: {str(e)}")
 
     async def disconnect(self, close_code):
         try:
@@ -122,5 +118,5 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.channel_name,
             )
         except Exception as e:
-            logger.error(f"Error in disconnect: {str(e)}")
+            print(f"Error in disconnect: {str(e)}")
             await self.close()

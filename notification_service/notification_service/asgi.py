@@ -1,3 +1,4 @@
+# asgi.py
 import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -14,7 +15,10 @@ application = ProtocolTypeRouter(
             URLRouter(
                 [
                     # Обработка WebSocket соединений
-                    path("ws/notifications/", NotificationConsumer.as_asgi()),
+                    path(
+                        "ws/notifications/<int:user_id>/",
+                        NotificationConsumer.as_asgi(),
+                    ),
                 ]
             )
         ),
