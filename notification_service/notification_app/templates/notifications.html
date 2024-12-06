@@ -23,9 +23,29 @@
 </html>
 <script>
     const user_id = {{ user_data.id }};
-    const socket = new WebSocket(`ws://localhost:8080/ws/notifications/${user_id}/`);
+    const url = `ws://127.0.0.1:8003/ws/notifications/${user_id}/`;
+    console.log("WebSocket URL:", url);
+    const socket = new WebSocket(url);
+
     socket.onerror = function(e) {
         console.error("Ошибка WebSocket:", e);
+    };
+
+    // Обработчики событий для сокета
+    socket.onopen = () => {
+        console.log("WebSocket connection established");
+    };
+
+    socket.onmessage = (event) => {
+        console.log("Received message:", event.data);
+    };
+
+    socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+    };
+
+    socket.onclose = () => {
+        console.log("WebSocket connection closed");
     };
     
 

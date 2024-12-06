@@ -8,9 +8,10 @@ import json
 
 # Конфигурация Kafka Consumer
 conf = {
-    "bootstrap.servers": "localhost:9092",
+    "bootstrap.servers": "kafka:9092",
     "group.id": "notification_group",
     "auto.offset.reset": "earliest",
+    "enable.auto.commit": True,
 }
 
 consumer = Consumer(conf)

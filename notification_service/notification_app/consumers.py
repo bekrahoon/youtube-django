@@ -1,12 +1,9 @@
-# consumer.py
 import json
-import requests
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
-from .models import Notification
 from .serializers import NotificationSerializer
-
 from views.views_get_user_api import get_user_data_from_auth_service
+from .models import Notification
 
 
 # Асинхронные операции с базой данных
@@ -33,18 +30,24 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
             # Получаем токен из заголовков запроса
-            token = self.scope["headers"].get("authorization", None)
-            if not token:
-                await self.close()  # Закрыть соединение, если нет токена
-                return
+            token = dict(
+                (x.split(b"=") for x in self.scope["query_string"].decode().split("&"))
+            ).get("token")
+
+            # if not token:
+            #     print("Token is missing or invalid.")
+            #     await self.close()  # Закрыть соединение, если нет токена
+            #     return
 
             # Получаем данные пользователя из auth_service
             user_data = await sync_to_async(get_user_data_from_auth_service)(token)
             if not user_data:
+                print("User data is missing or invalid.")
                 await self.close()  # Закрыть соединение, если данные не найдены
                 return
 
-            self.user_id = user_data["id"]
+            # Подключаем пользователя к комнате уведомлений
+            self.user_id = user_data["id"]  # Обновляем user_id, если данные получены
             self.room_group_name = f"notifications_{self.user_id}"
 
             # Присоединяемся к группе
@@ -53,6 +56,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.channel_name,
             )
 
+            # Принимаем подключение
             await self.accept()
 
         except Exception as e:

@@ -9,10 +9,10 @@ from .views_get_user_api import get_user_data_from_auth_service
 class NotificationsView(View):
     def get(self, request):
         user_data = get_user_data_from_auth_service(
-            self.request.headers.get("Authorization")
+            request.headers.get("Authorization")
         )
         if not user_data:
-            return JsonResponse({"error": "User not found"}, status=401)
+            return JsonResponse({"error": "Неверные данные пользователя."}, status=403)
 
         # Получаем все уведомления текущего пользователя
         notifications = Notification.objects.filter(user_id=int(user_data["id"]))
