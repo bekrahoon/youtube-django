@@ -1,9 +1,17 @@
 import json
+import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from .serializers import NotificationSerializer
 from views.views_get_user_api import get_user_data_from_auth_service
 from .models import Notification
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 # Асинхронные операции с базой данных
@@ -29,25 +37,30 @@ def update_notification_status(notification_id):
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
-            # Получаем токен из заголовков запроса
-            token = dict(
-                (x.split(b"=") for x in self.scope["query_string"].decode().split("&"))
-            ).get("token")
+            # Получаем токен из заголовков WebSocket запроса
+            token = None
+            for header in self.scope.get("headers", []):
+                if header[0] == b"authorization":
+                    token = (
+                        header[1].decode("utf-8").split(" ")[1]
+                    )  # Отделяем "Bearer " от самого токена
+                    break
 
-            # if not token:
-            #     print("Token is missing or invalid.")
-            #     await self.close()  # Закрыть соединение, если нет токена
-            #     return
+            if not token:
+                logger.warning("Token is missing.")
+                await self.close()
+                return
+            logger.info(f"Токен из заголовков WebSocket: {token}")  # Логирование токена
 
             # Получаем данные пользователя из auth_service
             user_data = await sync_to_async(get_user_data_from_auth_service)(token)
             if not user_data:
-                print("User data is missing or invalid.")
-                await self.close()  # Закрыть соединение, если данные не найдены
+                logger.warning("User data is missing or invalid.")
+                await self.close()
                 return
 
-            # Подключаем пользователя к комнате уведомлений
-            self.user_id = user_data["id"]  # Обновляем user_id, если данные получены
+            # Устанавливаем идентификатор пользователя и группу
+            self.user_id = user_data["id"]
             self.room_group_name = f"notifications_{self.user_id}"
 
             # Присоединяемся к группе
@@ -56,11 +69,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.channel_name,
             )
 
-            # Принимаем подключение
             await self.accept()
 
         except Exception as e:
-            print(f"Error in connect: {str(e)}")
+            logger.error(f"Error in connect: {str(e)}")
             await self.close()
 
     async def receive(self, text_data):
@@ -96,7 +108,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     },
                 )
         except Exception as e:
-            print(f"Error in receive: {str(e)}")
+            logger.error(f"Error in receive: {str(e)}")
             await self.close()
 
     async def notification_status_update(self, event):
@@ -112,15 +124,14 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 )
             )
         except Exception as e:
-            print(f"Error in notification_status_update: {str(e)}")
+            logger.error(f"Error in notification_status_update: {str(e)}")
 
     async def disconnect(self, close_code):
         try:
-            # Отключаем пользователя от группы
-            await self.channel_layer.group_discard(
-                self.room_group_name,
-                self.channel_name,
-            )
+            if hasattr(self, "room_group_name"):
+                await self.channel_layer.group_discard(
+                    self.room_group_name,
+                    self.channel_name,
+                )
         except Exception as e:
-            print(f"Error in disconnect: {str(e)}")
-            await self.close()
+            logger.error(f"Error in disconnect: {str(e)}")

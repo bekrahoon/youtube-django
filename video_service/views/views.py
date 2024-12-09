@@ -85,6 +85,11 @@ class VideoCreateView(CreateView):
             "video_id": self.object.id,
             "title": self.object.title,
             "timestamp": self.object.created_at.isoformat(),
+            "text": [
+                user_data["id"],
+                self.object.id,
+                self.object.title,
+            ],
         }
         try:
             for topic in ["video-topic", "notification-topic"]:
@@ -150,6 +155,11 @@ class VideoUpdateView(UpdateView):
             "video_id": self.object.id,
             "title": self.object.title,
             "timestamp": self.object.created_at.isoformat(),
+            "text": [
+                user_data["id"],
+                self.object.id,
+                self.object.title,
+            ],
         }
         try:
             for topic in ["video-topic", "notification-topic"]:
@@ -212,6 +222,11 @@ class VideoDeleteView(DeleteView):
                 "video_id": video.id,
                 "title": video.title,
                 "timestamp": video.created_at.isoformat(),
+                "text": [
+                    user_data["id"],
+                    self.object.id,
+                    self.object.title,
+                ],
             }
             for topic in ["video-topic", "notification-topic"]:
                 send_event(

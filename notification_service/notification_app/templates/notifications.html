@@ -9,7 +9,7 @@
     <h1>Уведомления</h1>
     <ul>
         {% for notification in notifications %}
-            <li>
+            <li id="notification-{{ notification.id }}">
                 <p>{{ notification.message }}</p>
                 <p><small>{{ notification.created_at }}</small></p>
                 <p>Status: {{ notification.status }}</p>
@@ -19,67 +19,80 @@
             </li>
         {% endfor %}
     </ul>
+
+    <script>
+        const user_id = {{ user_data.id }};
+        const url = `ws://192.168.1.10:8000/ws/notifications/${user_id}/`;
+        console.log("WebSocket URL:", url);
+        const socket = new WebSocket(url);
+
+        // Обработчик ошибок WebSocket
+        socket.onerror = function(e) {
+            console.error("Ошибка WebSocket:", e);
+        };
+
+        // Обработчики событий WebSocket
+        socket.onopen = () => {
+            console.log("WebSocket connection established");
+        };
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            
+            if (data.type === "notifications") {
+                // Обработка новых уведомлений
+                console.log("Получены уведомления:", data.notifications);
+                updateNotifications(data.notifications); // Обновление интерфейса
+            }
+
+            if (data.type === "notification_status_update") {
+                // Обработка обновления статуса уведомления
+                console.log("Статус уведомления обновлён:", data.notification_id, data.status);
+                updateNotificationStatus(data.notification_id, data.status);
+            }
+        };
+
+        socket.onclose = () => {
+            console.log("WebSocket connection closed");
+        };
+
+        // Функция для обновления списка уведомлений в интерфейсе
+        function updateNotifications(notifications) {
+            const ul = document.querySelector('ul');
+            notifications.forEach(notification => {
+                const li = document.createElement('li');
+                li.id = `notification-${notification.id}`;
+                li.innerHTML = `
+                    <p>${notification.message}</p>
+                    <p><small>${notification.created_at}</small></p>
+                    <p>Status: ${notification.status}</p>
+                    ${notification.status === 'unread' ? `<a href="/mark_as_read/${notification.id}">Mark as read</a>` : ''}
+                `;
+                ul.appendChild(li);
+            });
+        }
+
+        // Функция для обновления статуса уведомления в интерфейсе
+        function updateNotificationStatus(notification_id, status) {
+            const notificationElement = document.getElementById(`notification-${notification_id}`);
+            if (notificationElement) {
+                const statusElement = notificationElement.querySelector('p:last-of-type');
+                statusElement.textContent = `Status: ${status}`;
+            }
+        }
+
+        // Отправка запроса для получения уведомлений
+        function getNotifications() {
+            socket.send(JSON.stringify({ "action": "get_notifications" }));
+        }
+
+        // Отметить уведомление как прочитанное
+        function markNotificationAsRead(notification_id) {
+            socket.send(JSON.stringify({ 
+                "action": "mark_read", 
+                "notification_id": notification_id 
+            }));
+        }
+    </script>
 </body>
 </html>
-<script>
-    const user_id = {{ user_data.id }};
-    const url = `ws://127.0.0.1:8003/ws/notifications/${user_id}/`;
-    console.log("WebSocket URL:", url);
-    const socket = new WebSocket(url);
-
-    socket.onerror = function(e) {
-        console.error("Ошибка WebSocket:", e);
-    };
-
-    // Обработчики событий для сокета
-    socket.onopen = () => {
-        console.log("WebSocket connection established");
-    };
-
-    socket.onmessage = (event) => {
-        console.log("Received message:", event.data);
-    };
-
-    socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
-    };
-
-    socket.onclose = () => {
-        console.log("WebSocket connection closed");
-    };
-    
-
-    socket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        
-        if (data.type === "notifications") {
-            // Обработка уведомлений
-            console.log("Получены уведомления:", data.notifications);
-        }
-
-        if (data.type === "notification_status_update") {
-            // Обработка обновления статуса уведомления
-            console.log("Статус уведомления обновлён:", data.notification_id, data.status);
-        }
-    };
-
-    socket.onopen = function(e) {
-        console.log("WebSocket соединение установлено");
-    };
-
-    socket.onclose = function(e) {
-        console.log("WebSocket соединение закрыто");
-    };
-
-    function getNotifications() {
-        socket.send(JSON.stringify({ "action": "get_notifications" }));
-    }
-
-    function markNotificationAsRead(notification_id) {
-        socket.send(JSON.stringify({ 
-            "action": "mark_read", 
-            "notification_id": notification_id 
-        }));
-    }
-</script>
-

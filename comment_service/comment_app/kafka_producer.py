@@ -1,3 +1,5 @@
+import json
+import logging
 from confluent_kafka import Producer
 
 # Настройки Kafka
@@ -6,14 +8,21 @@ KAFKA_CONFIG = {
     "client.id": "comment-topic",
 }
 
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def get_kafka_producer():
     """Создает и возвращает Kafka Producer."""
+    logger.info("Создание Kafka Producer с настройками: %s", KAFKA_CONFIG)
     return Producer(KAFKA_CONFIG)
 
 
 def send_event(topic, key, value):
-    print(f"Отправка в Kafka - Топик: {topic}, Ключ: {key}, Значение: {value}")
+    logger.info(
+        "Отправка в Kafka - Топик: %s, Ключ: %s, Значение: %s", topic, key, value
+    )
     """
     Отправляет событие в Kafka.
     :param topic: Топик Kafka
@@ -24,10 +33,15 @@ def send_event(topic, key, value):
     try:
         producer.produce(
             topic,
-            key=key,
-            value=value,
+            key=str(key).encode("utf-8"),
+            value=json.dumps(value).encode("utf-8"),
+            callback=lambda err, msg: (
+                logger.info(f"Сообщение доставлено: {msg.topic()} [{msg.partition()}]")
+                if not err
+                else logger.error(f"Ошибка при доставке сообщения: {err}")
+            ),
         )
         producer.flush()  # Ждем завершения отправки
-        print(f"Событие отправлено: {key} -> {value}")
+        logger.info("Событие успешно отправлено в Kafka: %s -> %s", key, value)
     except Exception as e:
-        print(f"Ошибка отправки события в Kafka: {str(e)}")
+        logger.error("Ошибка при отправке события в Kafka: %s", str(e))

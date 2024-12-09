@@ -14,14 +14,13 @@
             <div class="comment" id="comment-{{ item.comment.id }}">
                 <p><strong>{{ item.comment.user_id }}</strong>: {{ item.comment.text }}</p>   
                 <p><em>Видео: 
-                    {% if item.video.title %}
-                        {{ item.video.title }}
+                    {% if item.title %}
+                        {{ item.title }}
                     {% else %}
                         видео нет
                     {% endif %}
-                </em></p>
-    
-                <!-- Выводим ответы на комментарий -->
+                </em></p>                
+                    <!-- Выводим ответы на комментарий -->
                 <div class="replies">
                     {% for reply in item.replies %}
                         <div class="reply">
@@ -34,10 +33,10 @@
                 <button class="reply-button" data-parent-id="{{ item.comment.id }}">Ответить</button>
     
                 <!-- Кнопки для редактирования и удаления комментария -->
-                {% if item.comment.user_id == user_data.id %}
+                {% comment %} {% if item.comment.user_id == user_data.id %}
                     <button class="edit-button" data-comment-id="{{ item.comment.id }}" data-current-text="{{ item.comment.text }}">Редактировать</button>
                     <button class="delete-button" data-comment-id="{{ item.comment.id }}">Удалить</button>
-                {% endif %}
+                {% endif %} {% endcomment %}
             </div>
         {% endfor %}
     </div>

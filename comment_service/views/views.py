@@ -7,8 +7,12 @@ from comment_app.kafka_producer import send_event
 from comment_app.forms import CommentForm
 from comment_app.models import Comment
 import json
+import logging
 
 from .views_get_user_api import get_user_data_from_auth_service
+
+# Создание логгера
+logger = logging.getLogger(__name__)
 
 
 class CommentListAndPostView(View):
@@ -30,7 +34,7 @@ class CommentListAndPostView(View):
             comments_with_details.append(
                 {
                     "comment": comment,
-                    "video": video_data,
+                    "title": video_data.get("title") or {},
                     "replies": comment.replies.all(),
                     "user": user_data,
                 }
@@ -52,6 +56,8 @@ class CommentListAndPostView(View):
         user_data = get_user_data_from_auth_service(
             self.request.headers.get("Authorization")
         )
+        logger.debug(f"Authorization Header: {request.headers.get('Authorization')}")
+
         if not user_data:
             return JsonResponse({"error": "User not found"}, status=401)
 
@@ -71,7 +77,9 @@ class CommentListAndPostView(View):
             video_data = self.get_video_data_cached(new_comment.video_id)
 
             if not video_data:
-                print(f"Данные о видео для video_id {new_comment.video_id} не найдены.")
+                logger.warning(
+                    f"Данные о видео для video_id {new_comment.video_id} не найдены."
+                )
 
             event_data = {
                 "user_id": user_data["id"],
@@ -89,59 +97,12 @@ class CommentListAndPostView(View):
                     )
 
             except Exception as e:
-                print(f"Ошибка при отправке события в Kafka: {str(e)}")
+                logger.error(f"Ошибка при отправке события в Kafka: {str(e)}")
 
             return JsonResponse({"success": True})
         else:
-            print(f"Ошибка при добавлении комментария: {form.errors}")
+            logger.error(f"Ошибка при добавлении комментария: {form.errors}")
         return JsonResponse({"success": False, "errors": form.errors}, status=400)
-
-    def put(self, request, *args, **kwargs):
-        user_data = get_user_data_from_auth_service(
-            self.request.headers.get("Authorization")
-        )
-        if not user_data:
-            return JsonResponse({"error": "User not found"}, status=401)
-
-        try:
-            data = json.loads(request.body)
-            comment_id = data.get("comment_id")
-            new_text = data.get("text")
-
-            if not comment_id or not new_text:
-                return JsonResponse({"error": "Invalid data"}, status=400)
-
-            comment = get_object_or_404(Comment, id=comment_id, user_id=user_data["id"])
-
-            comment.text = new_text
-            comment.save()
-
-            return JsonResponse({"success": True, "updated_text": new_text})
-        except Exception as e:
-            print(f"Ошибка при обновлении комментария: {str(e)}")
-            return JsonResponse({"error": "Something went wrong"}, status=500)
-
-    def delete(self, request, *args, **kwargs):
-        user_data = get_user_data_from_auth_service(
-            self.request.headers.get("Authorization")
-        )
-        if not user_data:
-            return JsonResponse({"error": "User not found"}, status=401)
-
-        try:
-            data = json.loads(request.body)
-            comment_id = data.get("comment_id")
-
-            if not comment_id:
-                return JsonResponse({"error": "Comment ID not provided"}, status=400)
-
-            comment = get_object_or_404(Comment, id=comment_id, user_id=user_data["id"])
-            comment.delete()
-
-            return JsonResponse({"success": True, "message": "Comment deleted"})
-        except Exception as e:
-            print(f"Ошибка при удалении комментария: {str(e)}")
-            return JsonResponse({"error": "Something went wrong"}, status=500)
 
     def get_video_data_cached(self, video_id):
         cached_data = cache.get(f"video_data_{video_id}")
@@ -149,12 +110,14 @@ class CommentListAndPostView(View):
             try:
                 cached_data = get_video_data(video_id) or {}
                 cache.set(f"video_data_{video_id}", cached_data, timeout=3600)
-                print(f"Данные о видео для video_id {video_id} получены и кэшированы.")
+                logger.info(
+                    f"Данные о видео для video_id {video_id} получены и кэшированы."
+                )
             except Exception as e:
-                print(
+                logger.error(
                     f"Ошибка при получении данных о видео для video_id {video_id}: {e}"
                 )
                 cached_data = {}
         else:
-            print(f"Данные о видео для video_id {video_id} загружены из кэша.")
+            logger.info(f"Данные о видео для video_id {video_id} загружены из кэша.")
         return cached_data
