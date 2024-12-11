@@ -23,7 +23,9 @@ class NotificationsView(View):
             return JsonResponse({"error": "Неверные данные пользователя."}, status=403)
 
         # Получаем все уведомления текущего пользователя
-        notifications = Notification.objects.filter(user_id=int(user_data["id"]))
+        notifications = Notification.objects.filter(
+            user_id=int(user_data["id"])
+        ).order_by("-created_at")
         logger.info(f"Найдено уведомлений: {notifications.count()}")
 
         # Отображаем уведомления на странице

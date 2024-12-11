@@ -3,8 +3,11 @@ from channels.auth import AuthMiddlewareStack
 
 import os
 from django.core.asgi import get_asgi_application
+import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "notification_service.settings")
+
+django.setup()
 
 application = ProtocolTypeRouter(
     {

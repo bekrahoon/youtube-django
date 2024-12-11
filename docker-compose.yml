@@ -65,13 +65,28 @@ services:
       - ./notification_service/.env
     environment:
       - DJANGO_SETTINGS_MODULE=notification_service.settings
-    command: daphne -b 0.0.0.0 -p 8000 notification_service.asgi:application & celery -A video_service worker --loglevel=info
-
+    command: >
+      sh -c " daphne -b 0.0.0.0 -p 8000 notification_service.asgi:application"
     depends_on:
       - postgres_notification_service
       - kafka
       - redis
       - auth_service
+
+  kafka_consumer_service:
+    build:
+      context: ./notification_service
+    container_name: kafka_consumer_service
+    networks:
+      backend:
+        ipv4_address: 192.168.1.25
+    env_file:
+      - ./notification_service/.env
+    command: >
+      sh -c " python -m notification_app.kafka_consumer"
+    depends_on:
+      - kafka
+      - redis
 
   recommendation_service:
     build:

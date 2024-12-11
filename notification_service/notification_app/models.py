@@ -19,7 +19,7 @@ class Notification(models.Model):
 
 class DeviceToken(models.Model):
     user_id = models.IntegerField()
-    token = models.CharField(max_length=255, unique=True)  # Сделаем токен уникальным
+    fcm_token = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

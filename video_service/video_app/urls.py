@@ -1,3 +1,5 @@
+from django.conf.urls.static import static
+from django.conf import settings
 from django.urls import path
 from views.views import (
     LiveStreamView,
@@ -29,3 +31,5 @@ urlpatterns = [
     ),
     path("live/", LiveStreamView.as_view(), name="live_stream"),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,3 +1,4 @@
+# kafka_consumer
 import os
 import django
 import logging
@@ -10,7 +11,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Настройка Django
+# Инициализация Django
 if not settings.configured:
     logger.info("Django не был инициализирован. Инициализация Django...")
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "notification_service.settings")
@@ -22,14 +23,13 @@ if not settings.configured:
 else:
     logger.debug("Django уже инициализирован.")
 
-
 from django.utils import timezone
 from confluent_kafka import Consumer, KafkaException, KafkaError
 from firebase_admin import messaging
 import json
 
+# Переместите импорт моделей сюда, после инициализации Django
 from .models import DeviceToken, Notification
-
 
 # Конфигурация Kafka Consumer
 conf = {
@@ -84,24 +84,45 @@ def consume_messages():
             logger.info(f"Получено сообщение из Kafka: {message}")
 
             try:
-                # Проверка, если данные уже строка JSON
-                if isinstance(message, str):
-                    message_data = json.loads(message)
-                    logger.debug(f"Данные сообщения: {message_data}")
+                # Попытка декодирования JSON
+                message_data = json.loads(message)
+                logger.debug(f"Тип данных после json.loads: {type(message_data)}")
+                logger.debug(f"Данные сообщения: {message_data}")
+
+                # Проверка, что message_data действительно является строкой JSON
+                if isinstance(message_data, str):
+                    message_data = json.loads(message_data)
+                    logger.debug(
+                        f"Тип данных после второго json.loads: {type(message_data)}"
+                    )
+                    logger.debug(
+                        f"Данные сообщения после второго декодирования: {message_data}"
+                    )
+
+                # Проверка, что message_data действительно является словарём
+                if isinstance(message_data, dict):
+                    logger.debug("message_data является словарем.")
                 else:
-                    logger.error(f"Сообщение не является строкой JSON: {message}")
+                    logger.error(f"Ожидался словарь, но получено: {type(message_data)}")
+                    logger.debug(f"Содержимое message_data: {message_data}")
                     continue
+
             except json.JSONDecodeError as e:
                 logger.error(f"Ошибка при декодировании JSON: {e}")
                 continue
 
-            # Теперь проверка, что message_data действительно является словарём
-            if not isinstance(message_data, dict):
-                logger.error(f"Ожидался словарь, но получено: {type(message_data)}")
-                continue
-
             user_id = message_data.get("user_id")
-            message_text = message_data.get("title" or "text")
+            title = message_data.get("title")
+            text_field = message_data.get("text")
+
+            # Обработка text_field (может быть строкой или списком)
+            if isinstance(text_field, list):
+                message_text = " ".join(map(str, text_field))
+            else:
+                message_text = str(text_field) if text_field else None
+                # Если message_text пуст, используем title
+            if not message_text:
+                message_text = title
 
             if not user_id or not message_text:
                 logger.warning("Некорректные данные в сообщении. Пропуск.")
@@ -120,7 +141,6 @@ def consume_messages():
                     created_at=timezone.now(),
                 )
                 logger.info(f"Уведомление добавлено в БД: {notification}")
-                logger.debug(f"Содержимое уведомления: {notification}")
             except Exception as e:
                 logger.error(f"Ошибка при сохранении уведомления: {e}")
                 continue
@@ -130,7 +150,7 @@ def consume_messages():
             if device_token:
                 send_firebase_notification(
                     token=device_token,
-                    title="Новое уведомление",
+                    title=title or "Новое уведомление",
                     body=message_text,
                 )
             else:
@@ -147,7 +167,7 @@ def consume_messages():
 def get_device_token(user_id):
     """Возвращает токен устройства для пользователя с указанным user_id."""
     try:
-        token = DeviceToken.objects.get(user_id=user_id).token
+        token = DeviceToken.objects.get(user_id=user_id).fcm_token
         logger.debug(f"Получен токен для user_id={user_id}: {token}")
         return token
     except DeviceToken.DoesNotExist:
@@ -155,4 +175,5 @@ def get_device_token(user_id):
         return None
 
 
-consume_messages()
+if __name__ == "__main__":
+    consume_messages()

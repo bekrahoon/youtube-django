@@ -12,4 +12,4 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(DeviceToken)
 class DeviceTokenAdmin(admin.ModelAdmin):
-    list_display = ("id", "user_id", "token", "created_at", "updated_at")
+    list_display = ("id", "user_id", "fcm_token", "created_at", "updated_at")

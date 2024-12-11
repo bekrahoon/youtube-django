@@ -14,3 +14,4 @@ pyfcm==2.0.7
 firebase-admin==6.6.0
 celery
 django-celery-beat
+django-webpush==0.3.6
