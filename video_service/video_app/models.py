@@ -11,6 +11,7 @@ class Video(models.Model):
     category = models.CharField(
         max_length=100, null=True, blank=True
     )  # Простая категория
+    tags = models.JSONField()
     keywords = models.TextField(
         max_length=100, null=True, blank=True
     )  # Ключевые слова через запятую

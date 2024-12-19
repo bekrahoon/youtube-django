@@ -20,7 +20,7 @@
         {% endfor %}
     </ul>
 
-    <script>
+<script>
         const user_id = {{ user_data.id }};
         const url = `ws://192.168.1.10:8000/ws/notifications/${user_id}/`;
         console.log("WebSocket URL:", url);
@@ -93,6 +93,93 @@
                 "notification_id": notification_id 
             }));
         }
-    </script>
+</script>
+
+
+<script src="https://www.gstatic.com/firebasejs/8.6.3/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.3/firebase-messaging.js"></script>
+
+<script>
+  var firebaseConfig = {
+    apiKey: "AIzaSyDVw6VqCgcl2wP6VQrVA3HjWs7BnzlzW_A", //! добавьте сюда apiKey
+    authDomain: "clon-1ecee.firebaseapp.com",  //! добавьте сюда authDomain
+    projectId: "clon-1ecee",   //! добавьте сюда projectId
+    storageBucket: "clon-1ecee.firebasestorage.app",   //! добавьте сюда storageBucket
+    messagingSenderId: "708525337657",   //! добавьте сюда messagingSenderId
+    appId: "1:708525337657:web:fb47f7e1861af56c4cb1e8",    //! добавьте сюда appId
+    measurementId: "G-7MRKKQQG1X"    //! добавьте сюда measurementId
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  const messaging = firebase.messaging();
+
+  // Запрашиваем разрешение на получение уведомлений
+  messaging.requestPermission()
+    .then(() => {
+      console.log("Notification permission granted.");
+      return messaging.getToken({ vapidKey: 'BFIqeuDV3pNn0gkznBABC9uGyDt4ZMSuXk1gDcTEsA_BSrVkcBMD8U-9DiU6y4TciD9xvObvuK2U3LMAsKU6NFs' });
+    })
+    .then((currentToken) => {
+      if (currentToken) {
+        console.log(currentToken);
+        sendFCMTokenToServer(currentToken);  // Используем currentToken для отправки
+      } else {
+        console.log('No registration token available. Request permission to generate one.');
+      }
+    })
+    .catch((err) => {
+      console.log('An error occurred while retrieving token.', err);
+    });
+
+  // Обработка входящих сообщений
+  messaging.onMessage((payload) => {
+    console.log('Message received. ', payload);
+    const notificationTitle = payload.notification.title;
+    const notificationOptions = {
+      body: payload.notification.body,
+      icon: payload.notification.icon
+    };
+
+    // Показываем уведомление пользователю
+    if (Notification.permission === "granted") {
+      new Notification(notificationTitle, notificationOptions);
+    }
+  });
+
+  // Получение CSRF токена
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function sendFCMTokenToServer(token) {
+    fetch('/notifications/save-fcm-token/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: new URLSearchParams({ 'fcm_token': token })  // Отправляем FCM токен в формате формы
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Token saved:', data);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+  }
+</script>
+
 </body>
 </html>

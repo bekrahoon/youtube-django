@@ -1,10 +1,11 @@
-from django.forms import ValidationError
 from video_app.serializers import VideoSerializer
 from video_app.permissions import IsOwner
 from video_app.models import Video
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 from confluent_kafka import Producer
+from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import AuthenticationFailed
 from .views_get_user_api import get_user_data_from_auth_service
 
 kafka_config = {
@@ -26,17 +27,24 @@ def send_kafka_message(topic, key, value):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes = []  # Если не используете стандартную аутентификацию
+    permission_classes = [AllowAny]
+
+    def get_permissions(self):
+        # Применение разрешений только для действий update и destroy
+        if self.action in ["update", "destroy"]:
+            return [IsAuthenticated(), IsOwner()]
+        return [IsAuthenticated()]
 
     def perform_create(self, serializer):
-        user_data = get_user_data_from_auth_service(
-            self.request.headers.get("Authorization")
-        )
+        # Получаем токен из заголовка запроса
+        token = self.request.headers.get("Authorization")
+        user_data = get_user_data_from_auth_service(token)
         if not user_data:
-            raise ValidationError("Неверные данные пользователя.")
+            raise AuthenticationFailed("Неверные данные пользователя.")
+
+        # Сохраняем видео и отправляем сообщение в Kafka
         video = serializer.save(user_id=user_data["id"])
-        # Отправка сообщения в Kafka при создании видео
         send_kafka_message(
             topic="video-topic",
             key="video created",
@@ -44,9 +52,13 @@ class VideoViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        print(f"Пользователь из запроса: {self.request.user}")
+        # Проверка данных пользователя и обновление видео
+        token = self.request.headers.get("Authorization")
+        user_data = get_user_data_from_auth_service(token)
+        if not user_data:
+            raise AuthenticationFailed("Неверные данные пользователя.")
+
         video = serializer.save()
-        # Отправка сообщения в Kafka при обновлении видео
         send_kafka_message(
             topic="video-topic",
             key="video updated",
@@ -54,17 +66,12 @@ class VideoViewSet(viewsets.ModelViewSet):
         )
 
     def perform_destroy(self, instance):
+        # Удаление видео и отправка сообщения в Kafka
         video_title = instance.title
         video_user = instance.user.username
         instance.delete()
-        # Отправка сообщения в Kafka при удалении видео
         send_kafka_message(
             topic="video-topic",
-            key="video destroyd",
-            value=f"Video destroyd: {video_title} by {video_user}",
+            key="video destroyed",
+            value=f"Video destroyed: {video_title} by {video_user}",
         )
-
-    def get_permissions(self):
-        if self.action in ["update", "destroy"]:
-            return [IsAuthenticated(), IsOwner()]
-        return [IsAuthenticated()]

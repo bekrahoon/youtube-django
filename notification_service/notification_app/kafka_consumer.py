@@ -1,8 +1,15 @@
 # kafka_consumer
-import os
-import django
-import logging
 from django.conf import settings
+from decouple import config
+from django.utils import timezone
+from confluent_kafka import Consumer, KafkaException, KafkaError
+from firebase_admin import messaging
+from firebase_admin import credentials
+import firebase_admin
+import logging
+import django
+import os
+import json
 
 # Настройка логирования
 logging.basicConfig(
@@ -23,19 +30,26 @@ if not settings.configured:
 else:
     logger.debug("Django уже инициализирован.")
 
-from django.utils import timezone
-from confluent_kafka import Consumer, KafkaException, KafkaError
-from firebase_admin import messaging
-import json
 
-# Переместите импорт моделей сюда, после инициализации Django
 from .models import DeviceToken, Notification
+
+
+SERVICE_ACCOUNT_FILE: str = config("FIREBASE_SERVICE_ACCOUNT_KEY")
+
+try:
+    cred = credentials.Certificate(SERVICE_ACCOUNT_FILE)
+    firebase_admin.initialize_app(cred)
+
+    logger.info("Firebase успешно инициализирован.")
+except Exception as e:
+    logger.error(f"Ошибка при инициализации Firebase: {e}")
+    raise
 
 # Конфигурация Kafka Consumer
 conf = {
     "bootstrap.servers": "kafka:9092",
     "group.id": "notification_group",
-    "auto.offset.reset": "earliest",
+    "auto.offset.reset": "latest",
     "debug": "all",  # Включение отладочных логов
 }
 
@@ -46,16 +60,31 @@ consumer.subscribe([topic])
 logger.info("Подписка завершена.")
 
 
-def send_firebase_notification(token, title, body):
-    """Отправка push-уведомления через Firebase."""
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
-        token=token,
+def send_firebase_notification(token, title, body, click_action_url=None):
+    """Отправка push-уведомления через Firebase для веб-приложения с картинкой и ссылкой."""
+
+    # Формируем уведомление с дополнительными данными
+    notification = messaging.Notification(
+        title=title,
+        body=body,
+        image="static/images/3062634.png",  # Ссылка на изображение
     )
+
+    # Формируем сообщение
+    message = messaging.Message(
+        notification=notification,
+        token=token,
+        # Здесь добавляем параметры для web push, например, для ссылки
+        webpush=messaging.WebpushConfig(
+            fcm_options=messaging.WebpushFCMOptions(  # Исправлено на WebpushFCMOptions
+                link=click_action_url
+                or "https://your-domain.com/notifications/"  # Ссылка по нажатию
+            )
+        ),
+    )
+
     try:
+        # Отправка сообщения через Firebase
         response = messaging.send(message)
         logger.info(f"Push-уведомление отправлено: {response}")
     except Exception as e:

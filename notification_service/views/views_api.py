@@ -1,27 +1,25 @@
-from django.forms import ValidationError
 from rest_framework import generics
 from notification_app.models import Notification
 from notification_app.serializers import NotificationSerializer
 from .views_get_user_api import get_user_data_from_auth_service
+from rest_framework.permissions import AllowAny
+
+from rest_framework.exceptions import AuthenticationFailed
 
 
 class NotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        # Возвращаем уведомления для текущего пользователя
-        return Notification.objects.filter(user=self.request.user_id)
-
-    def serializer_valid(self, serializer):
-        user_data = get_user_data_from_auth_service(
-            self.request.headers.get("Authorization")
-        )
+        # Проверка токена и получение данных пользователя
+        token = self.request.headers.get("Authorization")
+        user_data = get_user_data_from_auth_service(token)
         if not user_data:
-            raise ValidationError("Неверные данные пользователя.")
+            raise AuthenticationFailed("Неверные данные пользователя.")
 
-        # Передаем user в save() формы
-        serializer.save(user=user_data["id"])
+        # Привязываем ID пользователя к запросу
+        self.request.user_id = int(user_data["id"])
 
-        response = super().serializer_valid(serializer)
-
-        return response
+        # Возвращаем уведомления для пользователя
+        return Notification.objects.filter(user_id=self.request.user_id)

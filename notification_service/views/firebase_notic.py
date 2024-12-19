@@ -1,126 +1,109 @@
-from django.db.models.signals import post_save
-from django.db import IntegrityError
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404
-from django.dispatch import receiver
+# from django.db.models.signals import post_save
+# from django.db import IntegrityError
+from django.http import HttpResponse
+
+# from django.dispatch import receiver
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import status
-from chat.models import MyUser, Message
-from google.oauth2 import service_account
-from decouple import config
-import google.auth.transport.requests
-import requests
-from typing import Any
+from rest_framework.permissions import AllowAny
+
+# from google.oauth2 import service_account
+# from decouple import config
+# import google.auth.transport.requests
+# import requests
+# from typing import Any
+
+from notification_app.models import DeviceToken
+from .views_get_user_api import get_user_data_from_auth_service_v2
+import logging
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+import logging
 
 
 class SaveFcmTokenView(APIView):
-    permission_classes = [IsAuthenticated]  # Проверка на авторизацию
+    permission_classes = [AllowAny]  # Отключаем стандартную проверку аутентификации
 
-    def post(self, request: HttpRequest) -> Response:
-        token: str = request.data.get("fcm_token")
-        print(f"Received token: {token}")  # Логирование для отладки
-
-        if not token:
+    def post(self, request):
+        # Получение куки из заголовка
+        cookie_header = request.headers.get("Cookie")
+        if not cookie_header:
+            logger.error("Cookie заголовок отсутствует.")
             return Response(
-                {"status": "error", "message": "Token not provided"},
+                {"status": "error", "message": "Cookie header is missing"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = get_object_or_404(MyUser, id=request.user.id)
-        user.fcm_token = token
-        user.save()
-        print(f"Token saved for user: {user.username}")
+        # Извлечение access_token из куки
+        token_parts = [part.strip() for part in cookie_header.split(";")]
+        access_token = next(
+            (
+                part.split("=")[1]
+                for part in token_parts
+                if part.startswith("access_token=")
+            ),
+            None,
+        )
 
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
+        if not access_token:
+            logger.error("Access token отсутствует в куки.")
+            return Response(
+                {"status": "error", "message": "Access token not found in cookies"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
+        logger.info(f"Токен, полученный из куки: {access_token}")
 
-# Путь к вашему файлу сервисного аккаунта
-SERVICE_ACCOUNT_FILE: str = config("FIREBASE_SERVICE_ACCOUNT_KEY")
+        # Получение данных пользователя через внешний сервис
+        user_data = get_user_data_from_auth_service_v2(access_token)
+        if not user_data:
+            logger.warning("Не удалось получить данные пользователя для токена.")
+            return Response(
+                {"status": "error", "message": "Invalid user data"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-# Аутентификация с использованием сервисного аккаунта
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE
-)
-scoped_credentials = credentials.with_scopes(
-    ["https://www.googleapis.com/auth/firebase.messaging"]
-)
-request = google.auth.transport.requests.Request()
-scoped_credentials.refresh(request)
+        logger.info(f"Получены данные пользователя: {user_data}")
 
-access_token: str = scoped_credentials.token  # Токен доступа
+        # Извлечение user_id из данных
+        try:
+            user_id = int(user_data["id"])
+        except (KeyError, ValueError):
+            logger.error("ID пользователя отсутствует или некорректен.")
+            return Response(
+                {"status": "error", "message": "User ID is missing or invalid"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
+        # Получение токена устройства из тела запроса
+        token = request.data.get("fcm_token")
+        if not token:
+            logger.error("FCM токен не предоставлен.")
+            return Response(
+                {"status": "error", "message": "FCM token not provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-def send_notification(
-    token: str, title: str, body: str, click_action_url: Optional[str] = None
-) -> None:
+        # Проверяем или создаем запись для этого пользователя
+        device_token, created = DeviceToken.objects.get_or_create(user_id=user_id)
+        device_token.fcm_token = token
+        device_token.save()
 
-    url: str = "https://fcm.googleapis.com/v1/projects/chat-1a046/messages:send"
-    headers: Dict[str, str] = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json",
-    }
-
-    message: Dict[str, Any] = {
-        "token": token,
-        "data": {
-            "title": title,
-            "body": body,
-            "url": click_action_url or "https://your-default-url.com",
-            "icon": "static/images/3062634.png",
-            "image": "static/images/images_notis.avif",
-        },
-    }
-
-    payload: Dict[str, Any] = {"message": message}
-
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        print("Notification sent successfully:", response.json())
-    else:
-        # Логируем ошибку и удаляем невалидный токен
-        print("Failed to send notification:", response.status_code, response.json())
-        if response.status_code == 404:
-            # Пример кода для удаления невалидного токена
-            try:
-                MyUser.objects.filter(fcm_token=token).update(fcm_token=None)
-            except IntegrityError as e:
-                print("Error updating token:", e)
-
-
-@receiver(post_save, sender=Message)
-def notify_users(
-    sender: type[Message], instance: Message, created: bool, **kwargs: Any
-) -> None:
-    if created:
-        group = instance.group
-
-        # Проверка, является ли группа публичной или личной
-        if group.is_private:  # Предположим, что у группы есть флаг is_private
-            users = group.members.all()  # Личные переписки
-        else:
-            users = group.participants.all()  # Публичные группы
-
-        user_tokens = users.values_list(
-            "fcm_token", flat=True
-        )  # Преобразование QuerySet в список
-
-        for token in set(user_tokens):
-            if token:
-                # Формирование URL с идентификатором группы
-                message_url = f"http://127.0.0.1:8000/group/{group.id}/"
-
-                if instance.body_decrypted:  # Проверяем, есть ли текстовое сообщение
-                    message_content = f"╰┈➤ {instance.body_decrypted}"
-                elif instance.file:  # Если есть файл, отображаем это
-                    message_content = "📎 Вам отправлен Файл"
-                send_notification(
-                    token,
-                    f"{instance.user.username} 📩 ",
-                    message_content,
-                    click_action_url=message_url,
-                )
+        message = "Token created" if created else "Token updated"
+        logger.info(f"FCM токен успешно сохранен для пользователя {user_id}.")
+        return Response(
+            {"status": "success", "message": message},
+            status=status.HTTP_200_OK,
+        )
 
 
 def showFirebaseJS(request):
@@ -128,13 +111,13 @@ def showFirebaseJS(request):
         'importScripts("https://www.gstatic.com/firebasejs/8.6.3/firebase-app.js");'
         'importScripts("https://www.gstatic.com/firebasejs/8.6.3/firebase-messaging.js"); '
         "const firebaseConfig = {"
-        '    apiKey: "",'  #! добавить сюда apiKey
-        '    authDomain: "",'  #! добавить сюда authDomain
-        '    projectId: "",'  #! добавить сюда projectId
-        '    storageBucket: "",'  #! добавить сюда storageBucket
-        '    messagingSenderId: "",'  #! добавить сюда messagingSenderId
-        '    appId: "",'  #! добавить сюда appId
-        '    measurementId: ""'  #! добавить сюда measurementId
+        '    apiKey: "AIzaSyDVw6VqCgcl2wP6VQrVA3HjWs7BnzlzW_A",'  #! добавить сюда apiKey
+        '    authDomain: "clon-1ecee.firebaseapp.com",'  #! добавить сюда authDomain
+        '    projectId: "clon-1ecee",'  #! добавить сюда projectId
+        '    storageBucket: "clon-1ecee.firebasestorage.app",'  #! добавить сюда storageBucket
+        '    messagingSenderId: "708525337657",'  #! добавить сюда messagingSenderId
+        '    appId: "1:708525337657:web:fb47f7e1861af56c4cb1e8",'  #! добавить сюда appId
+        '    measurementId: "G-7MRKKQQG1X"'  #! добавить сюда measurementId
         "};"
         "firebase.initializeApp(firebaseConfig);"
         "const messaging = firebase.messaging();"

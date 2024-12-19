@@ -1,6 +1,6 @@
 from django.views.generic import View
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.core.cache import cache
 from comment_app.kafka_consumer import get_video_data
 from comment_app.kafka_producer import send_event
@@ -34,7 +34,7 @@ class CommentListAndPostView(View):
             comments_with_details.append(
                 {
                     "comment": comment,
-                    "title": video_data.get("title") or {},
+                    "video_data": video_data,
                     "replies": comment.replies.all(),
                     "user": user_data,
                 }
