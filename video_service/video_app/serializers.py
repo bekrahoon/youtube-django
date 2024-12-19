@@ -6,7 +6,7 @@ from .models import Video
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ["id", "title", "video_file", "user", "created_at"]
+        fields = ["id", "title", "tags", "video_file", "user", "created_at"]
 
     def create(self, validated_data):
         user = self.context["request"].user

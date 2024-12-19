@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
-
 
 class Video(models.Model):
     user = models.IntegerField()
@@ -11,7 +9,7 @@ class Video(models.Model):
     category = models.CharField(
         max_length=100, null=True, blank=True
     )  # Простая категория
-    tags = models.JSONField()
+    tags = models.CharField(max_length=255, null=True, blank=True)
     keywords = models.TextField(
         max_length=100, null=True, blank=True
     )  # Ключевые слова через запятую

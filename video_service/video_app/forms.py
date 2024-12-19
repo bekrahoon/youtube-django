@@ -13,6 +13,7 @@ class VideoForm(forms.ModelForm):
             "category",
             "preview",
             "file",
+            "tags",
             "duration",
         )
 
