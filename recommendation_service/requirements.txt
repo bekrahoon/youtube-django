@@ -7,3 +7,4 @@ pillow==11.0.0
 PyJWT==2.9.0
 python-decouple==3.8
 psycopg2==2.9.10
+elasticsearch==8.5.0

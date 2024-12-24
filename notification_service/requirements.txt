@@ -15,3 +15,4 @@ firebase-admin==6.6.0
 celery
 django-celery-beat
 django-webpush==0.3.6
+elasticsearch==8.5.0

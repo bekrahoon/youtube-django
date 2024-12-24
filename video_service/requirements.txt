@@ -27,3 +27,4 @@ boto3
 channels
 channels-redis
 whitenoise
+elasticsearch==8.5.0

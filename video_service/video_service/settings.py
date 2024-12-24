@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
-
+import logging
+from elasticsearch import Elasticsearch
+from logging.handlers import ElasticsearchHandler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -185,4 +187,33 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
+}
+
+
+# Настройка подключения к Elasticsearch
+es = Elasticsearch(["http://elasticsearch:9200"], http_auth=("elastic", "changeme"))
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+        },
+        "elasticsearch": {
+            "level": "DEBUG",
+            "class": "logging.handlers.ElasticsearchHandler",
+            "host": "elasticsearch",
+            "port": 9200,
+            "index": "django-logs",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "elasticsearch"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
 }
