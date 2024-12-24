@@ -5,12 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video List</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <script src="{% static 'js/scripts.js' %}" defer></script>
 </head>
 <body>
     <header>
-        <h1>Video List</h1>
+        <h1><a href="{% url "video_list" %}" style="color:white;">Video List</a></h1>
+        <form method="get" action="{% url 'video_list' %}">
+            <div>
+                {{ filter_form.query.label_tag }}
+                {{ filter_form.query }}
+            </div>
+            <div>
+                {{ filter_form.category.label_tag }}
+                {{ filter_form.category }}
+            </div>
+            <button type="submit" class="btn btn-primary">Искать</button>
+        </form>
         <a href="{% url 'video_create' %}"><div class="btn btn-create">Create New Video</div></a>
     </header>
 
@@ -19,12 +28,18 @@
             {% for video in videos %}
                 <li class="video-item">
                     <div class="video-preview">
-                        <img src="{{ video.preview.url }}" alt="Preview" class="preview-image">
+                        {% if video.preview.url %}
+                            <a href="{% url "video_detail" video.pk %}"><img src="{{ video.preview.url }}" alt="Preview" class="preview-image"></a>
+                        {% else %}
+                            <a href="{% url "video_detail" video.pk %}"><img src="{% static "img/preview.jpg" %}" alt="Preview" class="preview-image"></a>
+                        {% endif %}
                     </div>
                     <div class="video-details">
-                        <h2 class="video-title"><a href="{% url 'video_update' video.pk %}">{{ video.title }}</a></h2>
+                        <a href="{% url "video_detail" video.pk %}"><h2 class="video-title">{{ video.title }}</h2></a>
                         <p class="video-description">{{ video.description }}</p>
-                        <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
+                        <h3>{{ video.category }}</h3>
+                            <button class="btn btn-delete"><a href="{% url 'video_update' video.pk %}">Change</a></button>
+                            <button class="btn btn-delete"><a href="{% url 'video_delete' video.pk %}">Delete</a></button>
                     </div>
                 </li>
             {% endfor %}
@@ -34,5 +49,114 @@
     <footer>
         <p>&copy; 2024 Video Service</p>
     </footer>
+
+<style>
+    
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 2em;
+}
+
+a {
+    text-decoration: none;
+    color: #373232;
+}
+
+a:hover {
+    color: #f1c40f;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.btn-create {
+    background-color: #27ae60;
+}
+
+.btn-create:hover {
+    background-color: #2ecc71;
+}
+
+.btn-delete {
+    background-color: #e74c3c;
+    color: white;
+    margin-top: 10px;
+}
+
+.btn-delete:hover {
+    background-color: #c0392b;
+}
+
+.video-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.video-item {
+    background-color: #fff;
+    border-radius: 8px;
+    margin: 20px;
+    padding: 15px;
+    width: 250px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.video-item:hover {
+    transform: translateY(-10px);
+}
+
+.video-preview {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.preview-image {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.video-details {
+    text-align: center;
+}
+
+.video-title {
+    font-size: 1.2em;
+    color: #333;
+    margin: 10px 0;
+}
+
+.video-description {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+</style>
 </body>
 </html>

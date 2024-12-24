@@ -7,7 +7,7 @@ from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
     # Указываем поля для отображения в административной панели
-    list_display = ("email", "username", "is_staff", "is_active")
+    list_display = ("id", "email", "username", "is_staff", "is_active")
     list_filter = ("is_staff", "is_active", "groups")
 
     # Конфигурируем форму для редактирования пользователя

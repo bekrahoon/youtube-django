@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комментарии</title>
+</head>
+<body>
+    <h1>{{ comment_list_title }}</h1>
+
+    <div id="comment-list">
+        {% for item in comments_with_details %}
+        <div class="comment" id="comment-{{ item.comment.id }}">
+            <p><strong>{{ item.comment.user_id }}</strong>: {{ item.comment.text }}</p>   
+                {% if item.video_data %}
+                    <p><strong>Название видео:</strong> {{ item.video_data.title }}</p>
+                {% else %}
+                    видео нет
+                {% endif %}
+            <!-- Выводим ответы на комментарий -->
+            <div class="replies">
+                {% for reply in item.replies %}
+                    <div class="reply">
+                        <p><strong>{{ reply.user.username }}</strong>: {{ reply.text }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+    
+            <!-- Кнопка для ответа на комментарий -->
+            <button class="reply-button" data-parent-id="{{ item.comment.id }}">Ответить</button>
+            </div>
+        {% endfor %}
+    
+    </div>
+    
+
+    <h2>Добавить комментарий</h2>
+    <form id="comment-form" method="post" action="{% url 'comment_list_and_post' %}">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <input type="hidden" name="parent_id" id="parent-id"> <!-- Скрытое поле для родительского комментария -->
+        <input type="hidden" name="user_id" value="{{ user_data.id }}"> <!-- Данные пользователя -->
+        <button type="submit">Добавить комментарий</button>
+    </form>
+
+<script>
+        // Функция для извлечения токена из cookies
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+    
+        // URL для проверки авторизации
+        const authUrl = "http://127.0.0.1:8000/api/user-info/";
+    
+        // Функция проверки авторизации
+        async function checkAuthorization() {
+            const token = getCookie("access_token"); // Извлекаем токен из cookies
+    
+            if (!token) {
+                console.error("Токен не найден. Пожалуйста, войдите в систему.");
+                return null;
+            }
+    
+            try {
+                const response = await fetch(authUrl, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${token}`, 
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`Ошибка авторизации: ${response.status}`);
+                }
+    
+                const userData = await response.json();
+                return userData; // Возвращаем данные пользователя
+            } catch (error) {
+                console.error(error);
+                alert("Ошибка авторизации. Пожалуйста, войдите в систему.");
+                return null;
+            }
+        }
+    
+        // Обработчик нажатия на кнопку "Ответить"
+        document.querySelectorAll('.reply-button').forEach(button => {
+            button.addEventListener('click', function () {
+                const parentId = this.getAttribute('data-parent-id');
+                document.getElementById('parent-id').value = parentId;
+                document.getElementById('comment-form').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+                
+        // Перезагрузка страницы после успешной отправки формы
+        document.getElementById('comment-form').addEventListener('submit', function (event) {
+            event.preventDefault(); // Предотвращаем стандартную отправку формы
+    
+            const formData = new FormData(this);
+            const csrfToken = getCookie('csrftoken');
+    
+            fetch(this.action, {
+                method: "POST",
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Ошибка при отправке комментария");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Перезагружаем страницу
+                    window.location.reload();
+                } else {
+                    alert("Ошибка: " + JSON.stringify(data.errors));
+                }
+            })
+            .catch(error => {
+                console.error("Ошибка:", error);
+                alert("Ошибка при отправке комментария. Попробуйте ещё раз.");
+            });
+        });
+</script>
+
+    
+</body>
+</html>

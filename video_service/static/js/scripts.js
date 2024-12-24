@@ -11,15 +11,3 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-    const deleteButton = document.querySelector('.btn-delete');
-
-    if (deleteButton) {
-        deleteButton.addEventListener('click', function (event) {
-            const confirmation = confirm("Are you sure you want to delete this video? This action cannot be undone.");
-            if (!confirmation) {
-                event.preventDefault(); // Отменяем отправку формы, если пользователь не подтвердил
-            }
-        });
-    }
-});

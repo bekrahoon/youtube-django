@@ -1,0 +1,29 @@
+{% comment %} {% extends "base.html" %} {% endcomment %}
+{% load static %}
+{% block content %}
+{% if profile.user == user %}
+<div class="container">
+    <div class="profile-edit">
+        <h2 class="text-center">Редактирование профиля: {{ user.username }}</h2>
+
+        <form method="post" enctype="multipart/form-data" id="profile-edit-form">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.as_p }}
+            </div>
+
+            <button type="submit" class="btn btn-success btn-block">Сохранить изменения</button>
+            <div class = 'abolition'><a href="{% url 'profile_app:profile_detail' profile.pk %}" class="btn btn-secondary btn-block">Отмена</a></div>
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="comeback">
+    <a href="{% url 'profile_app:profile_detail' profile.pk %}">Назад!</a>
+</div>
+{% endif %}
+
+<link rel="stylesheet" href="{% static "css/profile_edit.css" %}">
+<script src="{% static "js/profile_edit.js" %}"></script>
+
+{% endblock %}

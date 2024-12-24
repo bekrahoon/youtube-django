@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delete Video</title>
-    <link rel="stylesheet" href="{% static 'css/confirmation.css' %}">
-    <script src="{% static 'js/scripts.js' %}" defer></script>
 </head>
 <body>
     <div class="confirmation-container">
@@ -31,5 +29,127 @@
             <p>&copy; 2024 Video Service</p>
         </footer>
     </div>
+
+
+<style>
+    /* static/css/styles.css */
+
+/* Общие стили */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+
+/* Контейнер с подтверждением */
+.confirmation-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 40px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Заголовок */
+header h1 {
+    color: #e74c3c;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Детали видео */
+.video-details {
+    margin-bottom: 20px;
+}
+
+.preview-image {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+/* Название видео */
+.video-title {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Формы и кнопки */
+.delete-form {
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 16px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #c0392b;
+}
+
+a {
+    text-decoration: none;
+    font-size: 16px;
+    color: #333;
+    display: inline-block;
+    margin-top: 20px;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #f39c12;
+}
+
+/* Кнопка "Cancel" */
+.btn-cancel {
+    background-color: #ccc;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+.btn-cancel:hover {
+    background-color: #bbb;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .confirmation-container {
+        width: 90%;
+        padding: 20px;
+    }
+    button {
+        font-size: 14px;
+    }
+}
+
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const fileInput = document.querySelector('input[type="file"]');
+        const fileNameDisplay = document.createElement("span");
+    
+        if (fileInput) {
+            fileInput.addEventListener("change", function () {
+                const fileName = fileInput.files[0] ? fileInput.files[0].name : "";
+                fileNameDisplay.textContent = fileName ? `Selected file: ${fileName}` : "";
+                fileInput.parentNode.appendChild(fileNameDisplay);
+            });
+        }
+    });
+    
+    
+</script>
 </body>
 </html>

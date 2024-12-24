@@ -1,6 +1,12 @@
 FROM python:3.12
 
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    apt-get clean
+
 WORKDIR /app
+
+ENV PYTHONUNBUFFERED = 1
 
 COPY requirements.txt /app/
 

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stream</title>
+</head>
+<body>
+    <h1>Live Stream</h1>
+    <video id="live-stream" controls autoplay>
+        <source src="ws://127.0.0.1:8001/ws/live/" type="video/webm">
+        Your browser does not support the video tag.
+    </video>
+</body>
+</html>
+<script>
+    const socket = new WebSocket('ws://127.0.0.1:8001/ws/stream/');
+
+    socket.onmessage = function(event) {
+        const videoData = event.data;
+        // Обновите видео-плеер или элемент на странице
+    };
+</script>

@@ -13,10 +13,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
-import json
 from pathlib import Path
 import os
-
+import logging
+from elasticsearch import Elasticsearch
+from logging.handlers import ElasticsearchHandler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,17 +38,22 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*").split(",")
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    # websocket
+    "channels",
     "django.contrib.staticfiles",
-    # my apps
-    "auth_app",
     # DRF
     "rest_framework",
+    "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    # my apps
+    "auth_app",
+    "profile_app",
     # "allauth",
     "django.contrib.sites",
     "allauth",
@@ -71,6 +77,29 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "auth_project.urls"
 
+CORS_URLS_REJEX = r"^/api/.*"
+CORS_ALLOWED_ORIGINS = []
+
+CORS_ALLOW_CREDENTIALS = True
+
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:8000",  # auth_service
+        "http://localhost:8001",  # video_service
+        "http://localhost:8002",  # comment_service
+        "http://localhost:8003",  # notification_service
+        "http://localhost:8004",  # recommendation_service
+        "http://127.0.0.1:8080",  # добавьте ваш фронтенд
+        "http://localhost:8080",  # если у вас есть другой вариант URL
+    ]
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8080",  # добавьте ваш фронтенд
+    "http://localhost:8080",  # если у вас есть другой вариант URL
+]
+CSRF_COOKIE_SECURE = False  # Only set to True if using HTTPS
+CSRF_COOKIE_HTTPONLY = True
+
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -87,8 +116,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "auth_project.wsgi.application"
+# WSGI_APPLICATION = "auth_project.wsgi.application"
+ASGI_APPLICATION = "auth_project.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -138,8 +176,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR / "media")
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -150,36 +191,16 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
 }
 
-
-AUTH_USER_MODEL = "auth_app.CustomUser"
-
-
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
+    "SIGNING_KEY": config("SIGNING_KEY"),
     "AUTH_HEADER_TYPES": ("Bearer",),
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
-    "JTI_CLAIM": "jti",
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -203,40 +224,45 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = "webmaster@example.com"
 
 
-# BASE_DIR = Path(__file__).resolve().parent.parent
-
-# with open(BASE_DIR / "client_secret.json") as f:
-#     google_secrets = json.load(f)
-
-# SOCIALACCOUNT_PROVIDERS = {
-#     "google": {
-#         "SCOPE": [
-#             "profile",
-#             "email",
-#         ],
-#         "AUTH_PARAMS": {
-#             "access_type": "online",
-#         },
-#         "CLIENT_ID": google_secrets["web"]["client_id"],
-#         "SECRET": google_secrets["web"]["client_secret"],
-#         "OAUTH_PKCE_ENABLED": True,
-#     }
-# }
-
-
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "OAUTH_PKCE_ENABLED": True,
         "APP": {
-            "client_id": config("GOOGLE_OAUTH_CLIENT_ID"),
-            "secret": config("GOOGLE_OAUTH_SECRET"),
+            "client_id": config("GOOGLE_CLIENT_ID"),
+            "secret": config("GOOGLE_CLIENT_SECRET"),
         },
     },
 }
 
+AUTH_USER_MODEL = "auth_app.CustomUser"
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",  # auth_service
-    "http://localhost:8001",  # user_profile_service
-    "http://localhost:8002",  # video_service
-]
-CORS_ALLOW_CREDENTIALS = True
+
+# Настройка подключения к Elasticsearch
+es = Elasticsearch(["http://elasticsearch:9200"], http_auth=("elastic", "changeme"))
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+        },
+        "elasticsearch": {
+            "level": "DEBUG",
+            "class": "logging.handlers.ElasticsearchHandler",
+            "host": "elasticsearch",
+            "port": 9200,
+            "index": "django-logs",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "elasticsearch"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
+}

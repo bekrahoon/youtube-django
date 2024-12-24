@@ -1,65 +1,81 @@
-from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
-from auth_app.models import CustomUser
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from django.contrib import messages
+from django.views import View
 from rest_framework_simplejwt.tokens import RefreshToken
+from auth_app.forms import CustomRegisterForm, CustomLoginForm
+from profile_app.models import UserProfile
 from rest_framework.response import Response
-from auth_app.serializers import LoginSerializer, RegisterSerializer
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
-class RegisterView(generics.CreateAPIView):
-    queryset = CustomUser.objects.all()
-    permission_classes = (AllowAny,)
-    serializer_class = RegisterSerializer
+class RegisterView(View):
+    def get(self, request):
+        form = CustomRegisterForm()
+        return render(request, "auth_app/register.html", {"form": form})
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response(
-            {
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-            },
-            status=status.HTTP_201_CREATED,
-        )
+    def post(self, request):
+        form = CustomRegisterForm(request.POST)
+        if form.is_valid():
+            # Создаем пользователя
+            user = form.save()
+            UserProfile.objects.create(user=user)
 
+            # Авторизуем пользователя после регистрации
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
-class LoginView(generics.GenericAPIView):
-    permission_classes = (AllowAny,)
-    serializer_class = LoginSerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = request.data["username"]
-        email = request.data["email"]
-        password = request.data["password"]
-        user = CustomUser.objects.filter(username=username, email=email).first()
-        if user and user.check_password(password):
+            # Генерация JWT токена
             refresh = RefreshToken.for_user(user)
-            return Response(
-                {
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token),
-                },
-                status=status.HTTP_200_OK,
-            )
-        else:
-            return Response(
-                {"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
-            )
+            access_token = refresh.access_token
+
+            # Сохраняем токен в сессии или передаем в контексте
+            request.session["access_token"] = str(access_token)
+            messages.success(request, "Registration successful")
+
+            # Перенаправляем на страницу профиля пользователя
+            return redirect("profile_app:profile_detail", pk=user.id)
+
+        # Если форма не прошла валидацию, возвращаем обратно с ошибками
+        return render(request, "auth_app/register.html", {"form": form})
 
 
-class UserDetailView(APIView):
+class LoginView(View):
+    def get(self, request):
+        form = CustomLoginForm()
+        return render(request, "auth_app/login.html", {"form": form})
+
+    def post(self, request):
+        form = CustomLoginForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+
+            # Генерация JWT токена
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+
+            # Сохраняем токен в сессии или передаем в контексте
+            request.session["access_token"] = str(access_token)
+            messages.success(request, "Login successful")
+
+            # Перенаправляем на страницу профиля пользователя
+            return redirect("profile_app:profile_detail", pk=user.id)
+
+        messages.error(request, "Login failed, please try again")
+        return render(request, "auth_app/login.html", {"form": form})
+
+
+class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         user = request.user
         return Response(
             {
+                "id": str(user.id),
                 "username": user.username,
                 "email": user.email,
             }
