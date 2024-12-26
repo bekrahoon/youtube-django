@@ -13,9 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
-import logging
-from elasticsearch import Elasticsearch
-from logging.handlers import ElasticsearchHandler
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -68,8 +66,15 @@ CORS_ALLOWED_ORIGINS = [
 
 
 # Настройка подключения к Elasticsearch
-es = Elasticsearch(["http://elasticsearch:9200"], http_auth=("elastic", "changeme"))
+import logging
+from elasticapm.handlers.logging import LoggingHandler
+from elasticapm import Client
 
+logger = logging.getLogger("django")
+handler = LoggingHandler()
+logger.addHandler(handler)
+
+# Настройка подключения к Elasticsearch через APM
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -80,10 +85,9 @@ LOGGING = {
         },
         "elasticsearch": {
             "level": "DEBUG",
-            "class": "logging.handlers.ElasticsearchHandler",
-            "host": "elasticsearch",
-            "port": 9200,
-            "index": "django-logs",
+            "class": "elasticapm.handlers.logging.LoggingHandler",
+            "client": Client,  # Используем клиент из elasticapm
+            "extra": {"custom": "django-logs"},
         },
     },
     "loggers": {
@@ -93,6 +97,13 @@ LOGGING = {
             "propagate": True,
         },
     },
+}
+
+# Конфигурация для elastic-apm
+ELASTIC_APM = {
+    "SERVICE_NAME": "comment_service",
+    "SERVER_URL": "http://192.168.1.33:8200",
+    "TIMEOUT": 10,
 }
 
 

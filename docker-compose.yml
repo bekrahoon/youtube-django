@@ -51,6 +51,7 @@ services:
       - kafka
       - redis
       - auth_service
+      - apm-server # Добавляем зависимость от сервиса APM
 
   notification_service:
     build:
@@ -219,6 +220,17 @@ services:
       - comment_service
       - notification_service
       - recommendation_service
+
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:7.10.0
+    container_name: apm-server
+    environment:
+      - output.elasticsearch.hosts=["elasticsearch:9200"] # Путь к Elasticsearch
+    ports:
+      - "8200:8200" # Порт для подключения к APM
+    networks:
+      backend:
+        ipv4_address: 192.168.1.33
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0

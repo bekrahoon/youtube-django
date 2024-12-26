@@ -1,3 +1,5 @@
+import json
+import logging
 from django.views.generic import View
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -6,13 +8,19 @@ from comment_app.kafka_consumer import get_video_data
 from comment_app.kafka_producer import send_event
 from comment_app.forms import CommentForm
 from comment_app.models import Comment
-import json
-import logging
-
 from .views_get_user_api import get_user_data_from_auth_service
+import elasticapm
+from elasticapm import Client
 
 # Создание логгера
 logger = logging.getLogger(__name__)
+
+# Настройка клиента ElasticAPM
+client = Client(
+    service_name="comment_service",  # Имя вашего сервиса
+    server_url="http://192.168.1.33:8200",  # URL вашего APM-сервера
+    timeout=10,
+)
 
 
 class CommentListAndPostView(View):
@@ -99,6 +107,16 @@ class CommentListAndPostView(View):
             except Exception as e:
                 logger.error(f"Ошибка при отправке события в Kafka: {str(e)}")
 
+                # Отправка ошибки в APM с дополнительной информацией
+                client.capture_exception(
+                    event_type="error",  # Указываем тип события
+                    exc_info=e,  # Передаем информацию об исключении
+                    context={
+                        "message": str(e),  # Сообщение об ошибке
+                        "user_id": user_data["id"],  # Идентификатор пользователя
+                        "video_id": new_comment.video_id,  # Идентификатор видео
+                    },
+                )
             return JsonResponse({"success": True})
         else:
             logger.error(f"Ошибка при добавлении комментария: {form.errors}")
