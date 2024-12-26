@@ -3,7 +3,6 @@ from notification_app.models import Notification
 from notification_app.serializers import NotificationSerializer
 from .views_get_user_api import get_user_data_from_auth_service
 from rest_framework.permissions import AllowAny
-
 from rest_framework.exceptions import AuthenticationFailed
 
 
