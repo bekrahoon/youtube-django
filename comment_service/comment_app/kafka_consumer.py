@@ -2,7 +2,15 @@ import logging
 from confluent_kafka import Consumer, KafkaException, KafkaError
 import json
 import time
+import elasticapm
+from elasticapm import Client
 
+# Настройка клиента ElasticAPM
+client = Client(
+    service_name="comment_service",  # Имя вашего сервиса
+    server_url="http://192.168.1.33:8200",  # URL вашего APM-сервера
+    timeout=10,
+)
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -87,12 +95,15 @@ def get_video_data(video_id, timeout=10):
                 logger.error(
                     f"Ошибка при парсинге JSON из сообщения Kafka: {video_data}"
                 )
+                client.capture_exception()  # Отправка исключения в APM
             except Exception as e:
                 # Логируем другие ошибки
                 logger.exception(f"Неожиданная ошибка: {e}")
+                client.capture_exception()  # Отправка исключения в APM
 
     except KafkaException as e:
         logger.error(f"Ошибка Kafka: {e}")
+        client.capture_exception()  # Отправка исключения в APM
     finally:
         consumer.close()
 
