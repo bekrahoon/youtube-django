@@ -2,19 +2,10 @@
 # from django.db import IntegrityError
 from django.http import HttpResponse
 
-# from django.dispatch import receiver
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-
-# from google.oauth2 import service_account
-# from decouple import config
-# import google.auth.transport.requests
-# import requests
-# from typing import Any
-
 from notification_app.models import DeviceToken
 from .views_get_user_api import get_user_data_from_auth_service_v2
 import logging
