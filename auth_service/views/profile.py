@@ -24,7 +24,7 @@ class UserProfileUpdateView(UpdateView):
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     authentication_classes = [JWTAuthentication]
     model = UserProfile
-    form_class = UserProfileForв
+    form_class = UserProfileForm
     template_name = "user_profile_app/profile_edit.html"
     success_url = "/profile/{pk}/"
 
